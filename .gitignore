@@ -3,3 +3,4 @@ Data Engineering Project - Berka Dataset.pdf
 .env
 minio/
 instructions
+*.log
