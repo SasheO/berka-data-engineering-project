@@ -4,3 +4,5 @@ Data Engineering Project - Berka Dataset.pdf
 minio/
 instructions
 *.log
+config/airflow.cfg
+test_minio.py
