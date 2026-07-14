@@ -7,3 +7,8 @@ instructions
 config/airflow.cfg
 test_minio.py
 kaggle_test.py
+datasets/*
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[codz]
+*$py.class
