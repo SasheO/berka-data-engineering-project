@@ -1,3 +1,7 @@
 apache-airflow-providers-amazon
 apache-airflow-providers-clickhousedb
 clickhouse-connect
+boto3
+kaggle
+dbt-core 
+dbt-clickhouse

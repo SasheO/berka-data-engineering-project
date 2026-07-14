@@ -6,3 +6,4 @@ instructions
 *.log
 config/airflow.cfg
 test_minio.py
+kaggle_test.py
