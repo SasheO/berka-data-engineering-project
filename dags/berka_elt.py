@@ -18,7 +18,7 @@ MINIO_BUCKET_NAME = 'berka-raw-data-bucket'
 DATASETS_FOLDER_PATH = 'datasets'
 CLICKHOUSE_CONN_ID = "clickhouse_conn"
 DAGS_DIR = Path(__file__).resolve().parent
-SQL_SCRIPTS_PATH = "sql_scripts"
+SQL_SCRIPTS_PATH =  "/opt/airflow/include/sql"
 SQL_DDL_SCRIPTS_PATH = f'{SQL_SCRIPTS_PATH}/create_tables'
 EMAIL_ON_FAILURE = os.getenv("MY_EMAIL")
 SOURCE_NAME_TO_INGESTION_SCRIPT_MAPPING = {
@@ -97,14 +97,16 @@ dag = DAG(
     start_date=datetime(2026, 7, 15),
     catchup=False,
     tags=["personal-project", "berka"],
-    template_searchpath=["/opt/airflow/include", "/opt/airflow/dags"],
+    template_searchpath=[DAGS_DIR,
+                        SQL_SCRIPTS_PATH
+                         ],
 )
 
 with dag:
     # create_source_tables = SQLExecuteQueryOperator(
     # task_id="create_source_tables",
     # conn_id=CLICKHOUSE_CONN_ID,
-    # sql=list_all_files_within_path(DAGS_DIR.parent / f"include/{SQL_DDL_SCRIPTS_PATH}", with_path_in_name=True, path_to_include = SQL_DDL_SCRIPTS_PATH)
+    # sql=list_all_files_within_path(SQL_SCRIPTS_PATH, with_path_in_name=True, path_to_include = 'create_tables')
     # )
     
     extract = PythonOperator(
