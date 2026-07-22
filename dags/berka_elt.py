@@ -4,7 +4,10 @@ import logging
 import os
 from airflow.models import DAG
 from airflow.operators.python import PythonOperator
+from airflow.decorators import task_group, task
 from airflow.providers.common.sql.operators.sql import SQLExecuteQueryOperator
+from airflow.providers.amazon.aws.operators.s3 import S3CreateBucketOperator
+from airflow.providers.amazon.aws.hooks.s3 import S3Hook
 from datetime import datetime, timedelta
 import clickhouse_connect
 from pathlib import Path
@@ -16,6 +19,7 @@ logger = logging.getLogger(__name__)
 
 MINIO_BUCKET_NAME = 'berka-raw-data-bucket'
 CLICKHOUSE_CONN_ID = "clickhouse_conn"
+MINIO_CONN_ID = "minio_conn"
 DAGS_DIR = Path(__file__).resolve().parent
 SQL_SCRIPTS_PATH =  "/opt/airflow/include/sql"
 SQL_DDL_SCRIPTS_PATH = f'{SQL_SCRIPTS_PATH}/create_tables'
@@ -41,28 +45,9 @@ def list_all_files_within_path(path: str, with_path_in_name: bool = False, path_
 
 def extract_source_data_from_kaggle():
     kg.api.authenticate()
-    kg.api.dataset_download_files(dataset = "marceloventura/the-berka-dataset", path=DATASETS_FOLDER_PATH, unzip=True)
-    logger.info(f"Successfully retrieved marceloventura/the-berka-dataset into {DATASETS_FOLDER_PATH}")
+    kg.api.dataset_download_files(dataset = "marceloventura/the-berka-dataset", path=DATASETS_PATH, unzip=True)
+    logger.info(f"Successfully retrieved marceloventura/the-berka-dataset into {DATASETS_PATH}")
     
-def stage_source_data_in_minio_bucket():
-    # TODO: clean up staged data from bucket at the end of DAG
-    s3_client = boto3.client('s3',
-                    endpoint_url='http://minio:19000',
-                    aws_access_key_id=os.getenv("MINIO_ROOT_USER"),
-                    aws_secret_access_key=os.getenv("MINIO_ROOT_PASSWORD"))
-    # Create bucket if not exists
-    try:
-        s3_client.head_bucket(Bucket=MINIO_BUCKET_NAME) # will throw error if bucket doesn't exist
-    except:
-        s3_client.create_bucket(Bucket=MINIO_BUCKET_NAME)
-
-    path = DATASETS_PATH
-    files = list_all_files_within_path(path, with_path_in_name = False)
-    for file in files:
-        # Upload a file to the bucket: https://docs.aws.amazon.com/boto3/latest/reference/services/s3_client/client/upload_file.html
-        s3_client.upload_file(os.path.join(path, file), MINIO_BUCKET_NAME, file)
-    
-    return files # push file names to xcom (?) -> this can be used for deleting them in cleanup tasks at the end
 
 def ingest_staged_data_into_source_tables():
     
@@ -109,6 +94,49 @@ with dag:
     # conn_id=CLICKHOUSE_CONN_ID,
     # sql=list_all_files_within_path(SQL_SCRIPTS_PATH, with_path_in_name=True, path_to_include = 'create_tables')
     # )
+
+    @task_group
+    def stage_source_data_in_minio_bucket():
+        # TODO: clean up staged data from bucket at the end of DAG
+        # Create bucket if not exists
+        create_bucket = S3CreateBucketOperator(
+            task_id="create_minio_bucket",
+            bucket_name=MINIO_BUCKET_NAME,
+            region_name="us-east-1",
+            aws_conn_id=MINIO_CONN_ID, 
+        )
+
+        @task
+        def upload_files_to_bucket():
+            s3_hook = S3Hook(aws_conn_id=MINIO_CONN_ID)
+            
+            if not os.path.exists(DATASETS_PATH):
+                raise FileNotFoundError(f"The directory {DATASETS_PATH} does not exist.")
+                
+            files = [f for f in os.listdir(DATASETS_PATH) if os.path.isfile(os.path.join(DATASETS_PATH, f))]
+            
+            if not files:
+                logger.warning(f"No files found in {DATASETS_PATH} to upload.")
+                return
+
+            logger.info(f"Found {len(files)} files to upload to s3://{MINIO_BUCKET_NAME}/")
+
+            for file_name in files:
+                local_file_path = os.path.join(DATASETS_PATH, file_name)
+                
+                print(f"Uploading {file_name}...")
+                s3_hook.load_file(
+                    filename=local_file_path,
+                    key=file_name,
+                    bucket_name=MINIO_BUCKET_NAME,
+                    replace=True  # Overwrites the file if it already exists in S3
+                )
+            logger.info("All files successfully uploaded.")
+            return files
+
+        upload_files = upload_files_to_bucket()
+        create_bucket >> upload_files
+
     
     extract = PythonOperator(
         task_id="extract_source_data_from_kaggle",
@@ -116,10 +144,7 @@ with dag:
         # op_kwargs={"key": "value"}  # Passes keyword arguments to the function
     )
 
-    stage = PythonOperator(
-        task_id="stage_source_data_in_minio_bucket",
-        python_callable=stage_source_data_in_minio_bucket,
-    )
+    stage = stage_source_data_in_minio_bucket()
 
     ingest_clickhouse = PythonOperator(
         task_id="ingest_staged_data_into_clickhouse_source_tables",
