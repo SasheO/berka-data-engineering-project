@@ -1,14 +1,23 @@
 # https://medium.com/@sant1/using-minio-with-docker-and-python-cbbad397cb5d
 import boto3
+import logging
 import os
 from airflow.sdk import DAG
+from airflow.decorators import dag, task, task_group
 from airflow.providers.standard.operators.python import PythonOperator
 from datetime import datetime, timedelta
+import clickhouse_connect
+from airflow.providers.common.sql.operators.sql import SQLExecuteQueryOperator
 from dotenv import load_dotenv
 load_dotenv()
 
+logger = logging.getLogger(__name__)
+
 MINIO_BUCKET_NAME = 'berka-raw-data-bucket'
-DATASETS_FOLDER = 'datasets'
+DATASETS_FOLDER_PATH = 'datasets'
+SQL_SCRIPTS_PATH = "dags\sql_scripts"
+CLICKHOUSE_CONN_ID = "TODO: FILL IN"
+SQL_DDL_SCRIPTS_PATH = f'{SQL_SCRIPTS_PATH}\create_tables'
 EMAIL_ON_FAILURE = os.getenv("MY_EMAIL")
 SOURCE_NAME_TO_INGESTION_SCRIPT_MAPPING = {
         "account": "src_accounts",
@@ -21,12 +30,41 @@ SOURCE_NAME_TO_INGESTION_SCRIPT_MAPPING = {
         "trans": "src_transactions",
     }
 
+def read_sql_script(filename: str) -> str:
+    with open('query.sql', 'r', encoding='utf-8') as file:
+        sql_query = file.read()
+
+    return sql_query
+
+@task
+def get_source_tables_to_be_created():
+    files = [f for f in os.listdir(SQL_DDL_SCRIPTS_PATH) if os.path.isfile(os.path.join(SQL_DDL_SCRIPTS_PATH, f))]
+    return files
+
+@task_group
+def create_source_tables(ddl_file_names: list[str]):
+    '''
+    take in dynamically passed list of src_* tables and run them
+    '''
+    for ddl_filename in ddl_file_names:
+        query = read_sql_script(os.path.join(SQL_DDL_SCRIPTS_PATH, ddl_filename))
+        # TODO: modify the sql operator below to make it work
+        SQLExecuteQueryOperator(
+        task_id="create_clickhouse_table",
+        conn_id=CLICKHOUSE_CONN_ID,
+        sql=query
+        )
+
+
 # TODO: add multiline comments to all functions
+@task
 def extract_source_data_from_kaggle():
     import kaggle as kg # import kaggle ONLY after loading environment variables
     kg.api.authenticate()
-    kg.api.dataset_download_files(dataset = "marceloventura/the-berka-dataset", path=DATASETS_FOLDER, unzip=True)
+    kg.api.dataset_download_files(dataset = "marceloventura/the-berka-dataset", path=DATASETS_FOLDER_PATH, unzip=True)
+    logger.info(f"Successfully retrieved marceloventura/the-berka-dataset into {DATASETS_FOLDER_PATH}")
     
+@task
 def stage_source_data_in_minio_bucket():
     # TODO: clean up staged data from bucket at the end of DAG
     s3_client = boto3.client('s3_client',
@@ -39,7 +77,7 @@ def stage_source_data_in_minio_bucket():
     except:
         s3_client.create_bucket(Bucket=MINIO_BUCKET_NAME)
 
-    path = DATASETS_FOLDER
+    path = DATASETS_FOLDER_PATH
     files = [f for f in os.listdir(path) if os.path.isfile(os.path.join(path, f))]
     for file in files:
         # Upload a file to the bucket: https://docs.aws.amazon.com/boto3/latest/reference/services/s3_client/client/upload_file.html
@@ -47,10 +85,8 @@ def stage_source_data_in_minio_bucket():
     
     return files # push file names to xcom (?) -> this can be used for deleting them in cleanup tasks at the end
 
-def create_source_table():
-    pass
-
-def ingest_staged_data_into_clickhouse_source_tables():
+@task
+def ingest_staged_data_into_source_tables():
     
     pass
 
