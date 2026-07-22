@@ -4,8 +4,8 @@
 -- women,
 -- where YYMMDD is the date of birth
 CREATE TABLE IF NOT EXISTS src_clients (
-    client_id Int32,
+    client_id UInt64,
     birth_number String,
-    district_id Int32
+    district_id UInt64
 ) ENGINE = MergeTree()
 ORDER BY (client_id);

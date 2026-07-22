@@ -9,7 +9,17 @@ load_dotenv()
 
 MINIO_BUCKET_NAME = 'berka-raw-data-bucket'
 DATASETS_FOLDER = 'datasets'
-email_on_failure = os.getenv("MY_EMAIL")
+EMAIL_ON_FAILURE = os.getenv("MY_EMAIL")
+SOURCE_NAME_TO_INGESTION_SCRIPT_MAPPING = {
+        "account": "src_accounts",
+        "card": "src_cards",
+        "client": "src_clients",
+        "disp": "sr_disposition",
+        "district": "src_demographic_districts",
+        "loan": "src_loans",
+        "order": "src_permanent_orders",
+        "trans": "src_transactions",
+    }
 
 # TODO: add multiline comments to all functions
 def extract_source_data_from_kaggle():
@@ -37,7 +47,11 @@ def stage_source_data_in_minio_bucket():
     
     return files # push file names to xcom (?) -> this can be used for deleting them in cleanup tasks at the end
 
+def create_source_table():
+    pass
+
 def ingest_staged_data_into_clickhouse_source_tables():
+    
     pass
 
 dag = DAG(
@@ -48,7 +62,7 @@ dag = DAG(
         "depends_on_past": True,
         "retries": 2,
         "retry_delay": timedelta(minutes=5),
-        'email': [email_on_failure],
+        'email': [EMAIL_ON_FAILURE],
         'email_on_failure': True,
         'email_on_retry': False,
         # 'queue': 'bash_queue',
