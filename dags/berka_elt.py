@@ -37,9 +37,11 @@ SOURCE_NAME_TO_INGESTION_SCRIPT_MAPPING = {
     }
 
 # TODO: add multiline comments to all functions
-def list_all_files_within_path(path: str, with_path_in_name: bool = False, path_to_include: str = ""):
+def list_all_files_within_path(path: str, with_path_in_name: bool = False):
+    if not os.path.exists(path):
+        raise FileNotFoundError(f"The directory {path} does not exist.")
     if with_path_in_name:
-        return [os.path.join(path_to_include, f) for f in os.listdir(path) if os.path.isfile(os.path.join(path, f))]
+        return [os.path.join(path, f) for f in os.listdir(path) if os.path.isfile(os.path.join(path, f))]
     else:
         return [f for f in os.listdir(path) if os.path.isfile(os.path.join(path, f))]
 
@@ -83,17 +85,17 @@ dag = DAG(
     catchup=False,
     tags=["personal-project", "berka"],
     template_searchpath=[DAGS_DIR,
-                        SQL_SCRIPTS_PATH,
+                        SQL_DDL_SCRIPTS_PATH,
                         DATASETS_PATH
                          ],
 )
 
 with dag:
-    # create_source_tables = SQLExecuteQueryOperator(
-    # task_id="create_source_tables",
-    # conn_id=CLICKHOUSE_CONN_ID,
-    # sql=list_all_files_within_path(SQL_SCRIPTS_PATH, with_path_in_name=True, path_to_include = 'create_tables')
-    # )
+    create_source_tables = SQLExecuteQueryOperator(
+    task_id="create_source_tables",
+    conn_id=CLICKHOUSE_CONN_ID,
+    sql=list_all_files_within_path(SQL_DDL_SCRIPTS_PATH)
+    )
 
     @task_group
     def stage_source_data_in_minio_bucket():
@@ -151,5 +153,5 @@ with dag:
         python_callable=ingest_staged_data_into_source_tables,
     )
 
-    # create_source_tables >> 
+    create_source_tables >> \
     extract >> stage >> ingest_clickhouse
