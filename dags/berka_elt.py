@@ -2,11 +2,11 @@
 import boto3
 import logging
 import os
-from airflow.sdk import DAG
-from airflow.providers.standard.operators.python import PythonOperator
+from airflow.models import DAG
+from airflow.operators.python import PythonOperator
+from airflow.providers.common.sql.operators.sql import SQLExecuteQueryOperator
 from datetime import datetime, timedelta
 import clickhouse_connect
-from airflow.providers.common.sql.operators.sql import SQLExecuteQueryOperator
 from pathlib import Path
 from dotenv import load_dotenv
 load_dotenv()
@@ -15,11 +15,11 @@ import kaggle as kg # import kaggle ONLY after loading environment variables
 logger = logging.getLogger(__name__)
 
 MINIO_BUCKET_NAME = 'berka-raw-data-bucket'
-DATASETS_FOLDER_PATH = 'datasets'
 CLICKHOUSE_CONN_ID = "clickhouse_conn"
 DAGS_DIR = Path(__file__).resolve().parent
 SQL_SCRIPTS_PATH =  "/opt/airflow/include/sql"
 SQL_DDL_SCRIPTS_PATH = f'{SQL_SCRIPTS_PATH}/create_tables'
+DATASETS_PATH =  "/opt/airflow/datasets"
 EMAIL_ON_FAILURE = os.getenv("MY_EMAIL")
 SOURCE_NAME_TO_INGESTION_SCRIPT_MAPPING = {
         "account": "src_accounts",
@@ -46,8 +46,8 @@ def extract_source_data_from_kaggle():
     
 def stage_source_data_in_minio_bucket():
     # TODO: clean up staged data from bucket at the end of DAG
-    s3_client = boto3.client('s3_client',
-                    endpoint_url='http://localhost:9000',
+    s3_client = boto3.client('s3',
+                    endpoint_url='http://minio:19000',
                     aws_access_key_id=os.getenv("MINIO_ROOT_USER"),
                     aws_secret_access_key=os.getenv("MINIO_ROOT_PASSWORD"))
     # Create bucket if not exists
@@ -56,7 +56,7 @@ def stage_source_data_in_minio_bucket():
     except:
         s3_client.create_bucket(Bucket=MINIO_BUCKET_NAME)
 
-    path = DATASETS_FOLDER_PATH
+    path = DATASETS_PATH
     files = list_all_files_within_path(path, with_path_in_name = False)
     for file in files:
         # Upload a file to the bucket: https://docs.aws.amazon.com/boto3/latest/reference/services/s3_client/client/upload_file.html
@@ -98,7 +98,8 @@ dag = DAG(
     catchup=False,
     tags=["personal-project", "berka"],
     template_searchpath=[DAGS_DIR,
-                        SQL_SCRIPTS_PATH
+                        SQL_SCRIPTS_PATH,
+                        DATASETS_PATH
                          ],
 )
 
