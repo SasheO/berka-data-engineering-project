@@ -1,0 +1,8 @@
+-- A1 (district_id/code) int;  A2 (district name) string;  A3 (region) String; 
+--A4 (no. of inhabitants) int; A5 (no. of municipalities with inhabitants < 499) int; 
+-- A6 (no. of municipalities with inhabitants 500­1999) int; A7 (no. of municipalities with inhabitants 2000­9999) int; 
+-- A8 (no. of municipalities with inhabitants >10000) int; A9 (no. of cities) int; 
+-- A10 (ratio of urban inhabitants) float; A11 (average_salary) float; A12 (unemploymant rate '95) float; 
+-- A13 (unemploymant rate '96) float; 
+-- A14 (no. of enterpreneurs per 1000 inhabitants) int; A15 (no. of commited crimes '95) int; 
+-- A16 (no. of commited crimes '96) int

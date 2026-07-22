@@ -1,0 +1,1 @@
+-- "account_id" string;"district_id"int;"frequency" low cardinality string;"date" date yymmdd

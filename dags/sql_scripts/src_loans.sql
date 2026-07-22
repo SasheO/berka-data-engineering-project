@@ -1,0 +1,1 @@
+-- "loan_id" int;"account_id" string;"date" date yymmdd;"amount" float;"duration" int;"payments" float;"status" low cardinality string/single char

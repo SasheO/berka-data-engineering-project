@@ -1,0 +1,1 @@
+-- "card_id" int;"disp_id" int;"type" low cardinality string;"issued" date time yymmdd hh:mm:ss

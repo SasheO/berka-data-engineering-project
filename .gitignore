@@ -12,3 +12,4 @@ datasets/*
 __pycache__/
 *.py[codz]
 *$py.class
+*.pyc

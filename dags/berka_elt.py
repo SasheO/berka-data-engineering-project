@@ -9,6 +9,7 @@ load_dotenv()
 
 MINIO_BUCKET_NAME = 'berka-raw-data-bucket'
 DATASETS_FOLDER = 'datasets'
+email_on_failure = os.getenv("MY_EMAIL")
 
 # TODO: add multiline comments to all functions
 def extract_source_data_from_kaggle():
@@ -17,7 +18,7 @@ def extract_source_data_from_kaggle():
     kg.api.dataset_download_files(dataset = "marceloventura/the-berka-dataset", path=DATASETS_FOLDER, unzip=True)
     
 def stage_source_data_in_minio_bucket():
-    # TODO: clean up staged data from bucket at the end of task
+    # TODO: clean up staged data from bucket at the end of DAG
     s3_client = boto3.client('s3_client',
                     endpoint_url='http://localhost:9000',
                     aws_access_key_id=os.getenv("MINIO_ROOT_USER"),
@@ -33,6 +34,8 @@ def stage_source_data_in_minio_bucket():
     for file in files:
         # Upload a file to the bucket: https://docs.aws.amazon.com/boto3/latest/reference/services/s3_client/client/upload_file.html
         s3_client.upload_file(os.path.join(path, file), MINIO_BUCKET_NAME, file)
+    
+    return files # push file names to xcom (?) -> this can be used for deleting them in cleanup tasks at the end
 
 def ingest_staged_data_into_clickhouse_source_tables():
     pass
@@ -45,6 +48,9 @@ dag = DAG(
         "depends_on_past": True,
         "retries": 2,
         "retry_delay": timedelta(minutes=5),
+        'email': [email_on_failure],
+        'email_on_failure': True,
+        'email_on_retry': False,
         # 'queue': 'bash_queue',
         # 'pool': 'backfill',
         # 'priority_weight': 10,
