@@ -36,6 +36,8 @@ SOURCE_NAME_TO_INGESTION_SCRIPT_MAPPING = {
         "trans": "src_transactions",
     }
 
+CLICKHOUSE_SCHEMA_NAME=os.getenv("CLICKHOUSE_SCHEMA_NAME", "berka_analytics")
+
 # TODO: add multiline comments to all functions
 def list_all_files_within_path(path: str, with_path_in_name: bool = False):
     if not os.path.exists(path):
@@ -77,7 +79,10 @@ dag = DAG(
         # 'on_retry_callback': another_function, # or list of functions
         # 'sla_miss_callback': yet_another_function, # or list of functions
         # 'on_skipped_callback': another_function, #or list of functions
-        'trigger_rule': 'all_success'
+        'trigger_rule': 'all_success',
+        'params': {
+            'db_schema': CLICKHOUSE_SCHEMA_NAME,
+            },
     },
     description="A dag which extracts, loads and transforms data from Berka financial dataset with DBT and Clickhouse",
     schedule=timedelta(days=1),

@@ -1,5 +1,5 @@
 -- "trans_id" int;"account_id" string;"date" date yymmdd;"type" low cardinality string;"operation" low cardinality string;"amount" float;"balance" float;"k_symbol" low cardinality string;"bank" string;"account" string
-CREATE TABLE IF NOT EXISTS src_transactions (
+CREATE TABLE IF NOT EXISTS {{ params.db_schema }}.src_transactions (
     trans_id UInt64,
     account_id String,
     date Date,

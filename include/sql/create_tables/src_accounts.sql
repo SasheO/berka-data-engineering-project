@@ -1,5 +1,5 @@
 -- "account_id" string;"district_id"int;"frequency" low cardinality string;"date" date yymmdd
-CREATE TABLE IF NOT EXISTS src_accounts (
+CREATE TABLE IF NOT EXISTS {{ params.db_schema }}.src_accounts (
     account_id String,
     district_id UInt64,
     frequency LowCardinality(String),

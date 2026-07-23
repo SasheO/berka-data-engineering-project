@@ -6,7 +6,7 @@
 -- A13 (unemploymant rate '96) float; 
 -- A14 (no. of enterpreneurs per 1000 inhabitants) int; A15 (no. of commited crimes '95) int; 
 -- A16 (no. of commited crimes '96) int
-CREATE TABLE IF NOT EXISTS src_demographic_district (
+CREATE TABLE IF NOT EXISTS {{ params.db_schema }}.src_demographic_district (
     district_id UInt64,
     district_name String,
     region String,

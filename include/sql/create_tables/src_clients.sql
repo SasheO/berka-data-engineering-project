@@ -3,7 +3,7 @@
 -- the number is in the form YYMM+50DD for
 -- women,
 -- where YYMMDD is the date of birth
-CREATE TABLE IF NOT EXISTS src_clients (
+CREATE TABLE IF NOT EXISTS 	{{ params.db_schema }}.src_clients (
     client_id UInt64,
     birth_number String,
     district_id UInt64
