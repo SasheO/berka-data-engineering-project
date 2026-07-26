@@ -1,0 +1,1 @@
+INSERT INTO {{ params.db_schema }}.{{ params.table_name }} SELECT * FROM file('{{ params.file_name }}.csv', CSVWithNames);

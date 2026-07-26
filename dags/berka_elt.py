@@ -26,14 +26,15 @@ SQL_DDL_SCRIPTS_PATH = f'{SQL_SCRIPTS_PATH}/create_tables'
 DATASETS_PATH =  "/opt/airflow/datasets"
 EMAIL_ON_FAILURE_LIST = [os.getenv("MY_EMAIL")]
 SOURCE_NAME_TO_INGESTION_SCRIPT_MAPPING = {
-        "account": "src_accounts",
-        "card": "src_cards",
-        "client": "src_clients",
-        "disp": "sr_disposition",
-        "district": "src_demographic_districts",
-        "loan": "src_loans",
-        "order": "src_permanent_orders",
-        "trans": "src_transactions",
+    # each record is file_name: (table_name, ingestion_script_name)
+        "account": ("src_accounts", "common"),
+        "card": ("src_cards", "common"),
+        "client": ("src_clients", "common"),
+        "disp": ("src_disposition", "common"),
+        "district": ("src_demographic_districts", "src_demographic_districts"),
+        "loan": ("src_loans", "common"),
+        "order": ("src_permanent_orders", "common"),
+        "trans": ("src_transactions", "common"),
     }
 
 CLICKHOUSE_SCHEMA_NAME=os.getenv("CLICKHOUSE_SCHEMA_NAME", "berka_analytics")
@@ -53,9 +54,7 @@ def extract_source_data_from_kaggle():
     logger.info(f"Successfully retrieved marceloventura/the-berka-dataset into {DATASETS_PATH}")
     
 
-def ingest_staged_data_into_source_tables():
-    
-    pass
+
 
 dag = DAG(
     "berka_elt",
@@ -159,10 +158,24 @@ with dag:
 
     stage = stage_source_data_in_minio_bucket()
 
-    ingest_clickhouse = PythonOperator(
-        task_id="ingest_staged_data_into_clickhouse_source_tables",
-        python_callable=ingest_staged_data_into_source_tables,
-    )
+    @task_group
+    def ingest_staged_data_into_source_tables():
+        # TODO: task group python operator (get_source_file) should get the file from minio bucket
+        # TODO: sql operator should run the ingestion
+        # TODO: for loop should loop through all files in there and set dependency of sql operator task from python task
+
+        @task
+        def get_source_file():
+            pass
+
+        for file_name, tup in SOURCE_NAME_TO_INGESTION_SCRIPT_MAPPING.items():
+            table_name, ingestion_script_name = tup
+            parameters={'db_schema': CLICKHOUSE_SCHEMA_NAME,
+                        "table_name": table_name,
+                        }
+
+
+    ingest_clickhouse = ingest_staged_data_into_source_tables()
 
     create_schema_tables >> create_source_tables >> \
     extract >> stage >> ingest_clickhouse
