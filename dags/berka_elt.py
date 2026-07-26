@@ -34,7 +34,7 @@ SOURCE_NAME_TO_INGESTION_SCRIPT_MAPPING = {
         "card": ("src_cards", "ingest_csv_with_names"),
         "client": ("src_clients", "ingest_csv_with_names"),
         "disp": ("src_disposition", "ingest_csv_with_names"),
-        "district": ("src_demographic_districts", "src_demographic_districts"),
+        "district": ("src_demographic_district", "src_demographic_districts"),
         "loan": ("src_loans", "ingest_csv_with_names"),
         "order": ("src_permanent_orders", "ingest_csv_with_names"),
         "trans": ("src_transactions", "ingest_csv_with_names"),
@@ -143,7 +143,7 @@ with dag:
                 print(f"Uploading {file_name}...")
                 s3_hook.load_file(
                     filename=local_file_path,
-                    key=file_name,
+                    key=file_name[:-4], # sliced to remove ".csv"
                     bucket_name=MINIO_BUCKET_NAME,
                     replace=True  # Overwrites the file if it already exists in S3
                 )
@@ -167,7 +167,7 @@ with dag:
             SQLExecuteQueryOperator(
                 task_id=f"ingest_into_{table_name}",
                 conn_id=CLICKHOUSE_CONN_ID,
-                sql="ingestion/"+ingestion_script_name,
+                sql="ingestion/"+ingestion_script_name+".sql",
                 params={'db_schema': CLICKHOUSE_SCHEMA_NAME,
                         "table_name": table_name,
                         "minio_endpoint": MINIO_ENDPOINT,
