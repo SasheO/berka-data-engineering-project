@@ -17,34 +17,37 @@ import kaggle as kg # import kaggle ONLY after loading environment variables
 
 logger = logging.getLogger(__name__)
 
-MINIO_BUCKET_NAME = 'berka-raw-data-bucket'
 CLICKHOUSE_CONN_ID = "clickhouse_conn"
+MINIO_BUCKET_NAME = 'berka-raw-data-bucket'
 MINIO_CONN_ID = "minio_conn"
+MINIO_ROOT_USER = os.getenv("MINIO_ROOT_USER")
+MINIO_ROOT_PASSWORD = os.getenv("MINIO_ROOT_PASSWORD")
+MINIO_ENDPOINT = os.getenv("MINIO_ENDPOINT")
 DAGS_DIR = Path(__file__).resolve().parent
 SQL_SCRIPTS_PATH =  "/opt/airflow/include/sql"
-SQL_DDL_SCRIPTS_PATH = f'{SQL_SCRIPTS_PATH}/create_tables'
+SQL_DDL_SCRIPTS_PATH_PREFIX = 'create_tables'
 DATASETS_PATH =  "/opt/airflow/datasets"
 EMAIL_ON_FAILURE_LIST = [os.getenv("MY_EMAIL")]
 SOURCE_NAME_TO_INGESTION_SCRIPT_MAPPING = {
     # each record is file_name: (table_name, ingestion_script_name)
-        "account": ("src_accounts", "common"),
-        "card": ("src_cards", "common"),
-        "client": ("src_clients", "common"),
-        "disp": ("src_disposition", "common"),
+        "account": ("src_accounts", "ingest_csv_with_names"),
+        "card": ("src_cards", "ingest_csv_with_names"),
+        "client": ("src_clients", "ingest_csv_with_names"),
+        "disp": ("src_disposition", "ingest_csv_with_names"),
         "district": ("src_demographic_districts", "src_demographic_districts"),
-        "loan": ("src_loans", "common"),
-        "order": ("src_permanent_orders", "common"),
-        "trans": ("src_transactions", "common"),
+        "loan": ("src_loans", "ingest_csv_with_names"),
+        "order": ("src_permanent_orders", "ingest_csv_with_names"),
+        "trans": ("src_transactions", "ingest_csv_with_names"),
     }
 
 CLICKHOUSE_SCHEMA_NAME=os.getenv("CLICKHOUSE_SCHEMA_NAME", "berka_analytics")
 
 # TODO: add multiline comments to all functions
-def list_all_files_within_path(path: str, with_path_in_name: bool = False):
+def list_all_files_within_path(path: str, with_path_prefix: str = ''):
     if not os.path.exists(path):
         raise FileNotFoundError(f"The directory {path} does not exist.")
-    if with_path_in_name:
-        return [os.path.join(path, f) for f in os.listdir(path) if os.path.isfile(os.path.join(path, f))]
+    if with_path_prefix:
+        return [with_path_prefix + "/" + f for f in os.listdir(path) if os.path.isfile(os.path.join(path, f))]
     else:
         return [f for f in os.listdir(path) if os.path.isfile(os.path.join(path, f))]
 
@@ -89,7 +92,8 @@ dag = DAG(
     catchup=False,
     tags=["personal-project", "berka"],
     template_searchpath=[DAGS_DIR,
-                        SQL_DDL_SCRIPTS_PATH,
+                        # SQL_DDL_SCRIPTS_PATH,
+                        SQL_SCRIPTS_PATH,
                         DATASETS_PATH
                          ],
 )
@@ -104,7 +108,7 @@ with dag:
     create_source_tables = SQLExecuteQueryOperator(
     task_id="create_source_tables",
     conn_id=CLICKHOUSE_CONN_ID,
-    sql=list_all_files_within_path(SQL_DDL_SCRIPTS_PATH)
+    sql=list_all_files_within_path(SQL_SCRIPTS_PATH+"/"+SQL_DDL_SCRIPTS_PATH_PREFIX, SQL_DDL_SCRIPTS_PATH_PREFIX)
     )
 
     @task_group
@@ -153,28 +157,28 @@ with dag:
     extract = PythonOperator(
         task_id="extract_source_data_from_kaggle",
         python_callable=extract_source_data_from_kaggle,
-        # op_kwargs={"key": "value"}  # Passes keyword arguments to the function
     )
 
-    stage = stage_source_data_in_minio_bucket()
 
     @task_group
     def ingest_staged_data_into_source_tables():
-        # TODO: task group python operator (get_source_file) should get the file from minio bucket
-        # TODO: sql operator should run the ingestion
-        # TODO: for loop should loop through all files in there and set dependency of sql operator task from python task
-
-        @task
-        def get_source_file():
-            pass
-
         for file_name, tup in SOURCE_NAME_TO_INGESTION_SCRIPT_MAPPING.items():
             table_name, ingestion_script_name = tup
-            parameters={'db_schema': CLICKHOUSE_SCHEMA_NAME,
+            SQLExecuteQueryOperator(
+                task_id=f"ingest_into_{table_name}",
+                conn_id=CLICKHOUSE_CONN_ID,
+                sql="ingestion/"+ingestion_script_name,
+                params={'db_schema': CLICKHOUSE_SCHEMA_NAME,
                         "table_name": table_name,
+                        "minio_endpoint": MINIO_ENDPOINT,
+                        "minio_username": MINIO_ROOT_USER,
+                        "minio_password": MINIO_ROOT_PASSWORD,
+                        "file_name": file_name,
+                        "minio_bucket_name": MINIO_BUCKET_NAME,
                         }
+            )
 
-
+    stage = stage_source_data_in_minio_bucket()
     ingest_clickhouse = ingest_staged_data_into_source_tables()
 
     create_schema_tables >> create_source_tables >> \
