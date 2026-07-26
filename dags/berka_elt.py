@@ -24,7 +24,7 @@ DAGS_DIR = Path(__file__).resolve().parent
 SQL_SCRIPTS_PATH =  "/opt/airflow/include/sql"
 SQL_DDL_SCRIPTS_PATH = f'{SQL_SCRIPTS_PATH}/create_tables'
 DATASETS_PATH =  "/opt/airflow/datasets"
-EMAIL_ON_FAILURE = os.getenv("MY_EMAIL")
+EMAIL_ON_FAILURE_LIST = [os.getenv("MY_EMAIL")]
 SOURCE_NAME_TO_INGESTION_SCRIPT_MAPPING = {
         "account": "src_accounts",
         "card": "src_cards",
@@ -65,7 +65,7 @@ dag = DAG(
         "depends_on_past": True,
         "retries": 2,
         "retry_delay": timedelta(minutes=5),
-        'email': [EMAIL_ON_FAILURE],
+        'email': EMAIL_ON_FAILURE_LIST,
         'email_on_failure': True,
         'email_on_retry': False,
         # 'queue': 'bash_queue',
@@ -96,6 +96,12 @@ dag = DAG(
 )
 
 with dag:
+    create_schema_tables = SQLExecuteQueryOperator(
+    task_id="create_schema",
+    conn_id=CLICKHOUSE_CONN_ID,
+    sql=f'CREATE DATABASE IF NOT EXISTS {CLICKHOUSE_SCHEMA_NAME};'
+    )
+
     create_source_tables = SQLExecuteQueryOperator(
     task_id="create_source_tables",
     conn_id=CLICKHOUSE_CONN_ID,
@@ -158,5 +164,5 @@ with dag:
         python_callable=ingest_staged_data_into_source_tables,
     )
 
-    create_source_tables >> \
+    create_schema_tables >> create_source_tables >> \
     extract >> stage >> ingest_clickhouse
