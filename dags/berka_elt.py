@@ -48,25 +48,26 @@ CLICKHOUSE_SCHEMA_NAME=os.getenv("CLICKHOUSE_SCHEMA_NAME", "berka_analytics")
 
 @task()
 def stream_and_stage_source_data_from_kaggle():
-    url = "https://kaggle.com/marceloventura/the-berka-dataset"
+    dataset_name = "marceloventura/the-berka-dataset"
+    url = f"https://www.kaggle.com/api/v1/datasets/download/{dataset_name}"
     
     response = requests.get(url,  auth=(KAG_USER, KAGGLE_KEY), stream=True)
     if response.status_code != 200:
         raise ValueError(f"Kaggle API Error {response.status_code}: {response.text}")
 
     content_type = response.headers.get('Content-Type')
-    logger.info(f"--- DIAGNOSTIC: Content-Type from server is: {content_type} ---")
-
-    logger.info(f"Successfully retrieved marceloventura/the-berka-dataset")
+    logger.info(f"Successfully retrieved {dataset_name}, file type: {content_type}")
     
     # Convert the raw stream into a file-like object in memory
-    zip_buffer = zipfile.ZipFile(io.BytesIO(response.content))
+    zip_buffer = io.BytesIO(response.content)
     s3_hook = S3Hook(aws_conn_id=MINIO_CONN_ID)
 
     kaggle_file_names = []
 
     # Extract and upload each file individually without writing to disk
     with zipfile.ZipFile(zip_buffer) as z:
+
+        # for each file zipfile object
         for file_info in z.infolist():
             # Skip directory markers inside the zip archive
             if file_info.is_dir():
@@ -74,16 +75,16 @@ def stream_and_stage_source_data_from_kaggle():
                 
             logger.info(f"Extracting and uploading: {file_info.filename}")
             
-            # Open the specific file inside the zip as a stream
+            # Open the specific file inside the zip as a file object in memory
             with z.open(file_info.filename) as extracted_file:
-                # Construct the target object path in MinIO
-                object_name = file_info.filename[-4:] # sliced to remove ".csv"
+
+                object_name = file_info.filename[:-4] # sliced to remove ".csv"
                 
-                # Stream the file directly into MinIO
+                # Upload file object to minios
                 logger.info(f"Uploading {object_name}...")
-                s3_hook.load_file(
-                    bytes_data=extracted_file,
-                    key=object_name, # sliced to remove ".csv"
+                s3_hook.load_file_obj(
+                    file_obj=extracted_file,
+                    key=object_name,
                     bucket_name=MINIO_BUCKET_NAME,
                     replace=True  # Overwrites the file if it already exists in S3
                 )
@@ -92,48 +93,6 @@ def stream_and_stage_source_data_from_kaggle():
 
     logger.info("All files unzipped and transferred successfully!")
     return kaggle_file_names # put this in context for deleting files later in pipeline
-
-@task_group()
-def stage_source_data_in_minio_bucket():
-    # TODO: clean up staged data from bucket at the end of DAG
-    # Create bucket if not exists
-    create_bucket = S3CreateBucketOperator(
-        task_id="create_minio_bucket",
-        bucket_name=MINIO_BUCKET_NAME,
-        region_name="us-east-1",
-        aws_conn_id=MINIO_CONN_ID, 
-    )
-
-    @task
-    def upload_files_to_bucket():
-        s3_hook = S3Hook(aws_conn_id=MINIO_CONN_ID)
-        
-        if not os.path.exists(DATASETS_PATH):
-            raise FileNotFoundError(f"The directory {DATASETS_PATH} does not exist.")
-            
-        files = [f for f in os.listdir(DATASETS_PATH) if os.path.isfile(os.path.join(DATASETS_PATH, f))]
-        
-        if not files:
-            logger.warning(f"No files found in {DATASETS_PATH} to upload.")
-            return
-
-        logger.info(f"Found {len(files)} files to upload to s3://{MINIO_BUCKET_NAME}/")
-
-        for file_name in files:
-            local_file_path = os.path.join(DATASETS_PATH, file_name)
-            
-            print(f"Uploading {file_name}...")
-            s3_hook.load_file(
-                filename=local_file_path,
-                key=file_name[:-4], # sliced to remove ".csv"
-                bucket_name=MINIO_BUCKET_NAME,
-                replace=True  # Overwrites the file if it already exists in S3
-            )
-        logger.info("All files successfully uploaded.")
-        return files
-
-    upload_files = upload_files_to_bucket()
-    create_bucket >> upload_files
 
 @task_group()
 def ingest_staged_data_into_source_tables():
