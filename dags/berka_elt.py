@@ -23,9 +23,6 @@ logger = logging.getLogger(__name__)
 CLICKHOUSE_CONN_ID = "clickhouse_conn"
 MINIO_BUCKET_NAME = 'berka-raw-data-bucket'
 MINIO_CONN_ID = "minio_conn"
-MINIO_ROOT_USER = os.getenv("MINIO_ROOT_USER")
-MINIO_ROOT_PASSWORD = os.getenv("MINIO_ROOT_PASSWORD")
-MINIO_ENDPOINT = os.getenv("MINIO_ENDPOINT")
 DAGS_DIR = Path(__file__).resolve().parent
 SQL_SCRIPTS_PATH =  "/opt/airflow/include/sql"
 SQL_DDL_SCRIPTS_PATH_PREFIX = 'create_tables'
@@ -79,7 +76,7 @@ def stream_and_stage_source_data_from_kaggle():
             with z.open(file_info.filename) as extracted_file:
 
                 object_name = file_info.filename[:-4] # sliced to remove ".csv"
-                
+
                 # Upload file object to minios
                 logger.info(f"Uploading {object_name}...")
                 s3_hook.load_file_obj(
@@ -104,9 +101,6 @@ def ingest_staged_data_into_source_tables():
             sql="ingestion/"+ingestion_script_name+".sql",
             params={'db_schema': CLICKHOUSE_SCHEMA_NAME,
                     "table_name": table_name,
-                    "minio_endpoint": MINIO_ENDPOINT,
-                    "minio_username": MINIO_ROOT_USER,
-                    "minio_password": MINIO_ROOT_PASSWORD,
                     "file_name": file_name,
                     "minio_bucket_name": MINIO_BUCKET_NAME,
                     }
