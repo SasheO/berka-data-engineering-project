@@ -105,6 +105,18 @@ def ingest_staged_data_into_source_tables():
                     "minio_bucket_name": MINIO_BUCKET_NAME,
                     }
         )
+
+'''
+TODO: start with DBT using this library:
+https://astronomer.github.io/astronomer-cosmos/getting_started/index.html
+e.g. https://github.com/astronomer/astronomer-cosmos/blob/main/dev/dags/basic_cosmos_task_group.py
+
+for SCD 2: dbt snapshot natively supports SCD 2 e.g.
+    - all SCD 0-4 in dbt including SCD2 with snapshot: https://www.thedataschool.co.uk/matthias-albert/dbt-snapshots-and-slowly-changing-dimensions-scds/
+    - incremental: https://medium.com/@gharikrishnade/implementing-slowly-changing-dimensions-scd-type-2-in-dbt-a-step-by-step-guide-413a9fffc035
+    - incremental vs snapshot: https://www.linkedin.com/posts/cayo-dias_dbt-dataengineering-analyticsengineering-share-7417312049241894912-vEHf/
+'''
+
 dag = DAG(
     "berka_elt",
     # These args will get passed on to each operator
