@@ -36,7 +36,7 @@ SOURCE_NAME_TO_INGESTION_SCRIPT_MAPPING = {
         "card": ("src_cards", "ingest_csv_with_names"),
         "client": ("src_clients", "ingest_csv_with_names"),
         "disp": ("src_disposition", "ingest_csv_with_names"),
-        "district": ("src_demographic_district", "src_demographic_districts"),
+        "district": ("src_demographic_district", "src_demographic_district"),
         "loan": ("src_loans", "ingest_csv_with_names"),
         "order": ("src_permanent_orders", "ingest_csv_with_names"),
         "trans": ("src_transactions", "ingest_csv_with_names"),

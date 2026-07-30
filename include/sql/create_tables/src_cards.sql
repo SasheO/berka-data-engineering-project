@@ -3,7 +3,7 @@ CREATE TABLE IF NOT EXISTS {{ params.db_schema }}.src_cards (
     card_id UInt64,
     disp_id UInt64,
     type LowCardinality(String),
-    issued DateTime
+    issued String
 ) ENGINE = MergeTree()
-PARTITION BY toYYYYMM(issued)
-ORDER BY (disp_id, issued, card_id);
+-- PARTITION BY toYYYYMM(issued)
+ORDER BY (card_id);

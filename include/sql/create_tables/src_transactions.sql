@@ -2,8 +2,8 @@
 CREATE TABLE IF NOT EXISTS {{ params.db_schema }}.src_transactions (
     trans_id UInt64,
     account_id String,
-    date Date,
-    type LowCardinality(String),
+    `date` String,
+    `type` LowCardinality(String),
     operation LowCardinality(String),
     amount Float32,
     balance Float32,
@@ -11,5 +11,5 @@ CREATE TABLE IF NOT EXISTS {{ params.db_schema }}.src_transactions (
     bank String,
     account String
 ) ENGINE = MergeTree()
-PARTITION BY toYYYYMM(date)
-ORDER BY (account_id, date, trans_id);
+-- PARTITION BY toYYYYMM(date) 
+ORDER BY (trans_id);
