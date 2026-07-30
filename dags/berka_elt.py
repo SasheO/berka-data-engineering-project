@@ -41,7 +41,7 @@ SOURCE_NAME_TO_INGESTION_SCRIPT_MAPPING = {
         "order": ("src_permanent_orders", "ingest_csv_with_names"),
         "trans": ("src_transactions", "ingest_csv_with_names"),
     }
-CLICKHOUSE_SCHEMA_NAME=os.getenv("CLICKHOUSE_SCHEMA_NAME", "berka_analytics")
+CLICKHOUSE_SCHEMA_NAME=os.getenv("CLICKHOUSE_SCHEMA_NAME", "berka_raw")
 
 @task()
 def stream_and_stage_source_data_from_kaggle():

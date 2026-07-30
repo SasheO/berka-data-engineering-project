@@ -1,0 +1,20 @@
+version: 2
+
+sources:
+  - name: berka_raw
+    database: berka_raw
+    tables:
+      - name: src_accounts
+        description: Raw bank accounts table within this bank
+      - name: src_clients
+        description: Raw credit cards data table
+      - name: src_demographic_district
+        description: Raw demographic district data table
+      - name: src_disposition
+        description: Raw data table on how clients relate to accounts (and associated credit cards, in some cases)
+      - name: src_loans
+        description: Raw data table on loan granted for to accounts
+      - name: src_permanent_orders
+        description: Raw data table on characteristics of payment order
+      - name: src_transactions
+        description: Raw data table on transactions on different accounts
