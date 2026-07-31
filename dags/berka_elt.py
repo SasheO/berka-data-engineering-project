@@ -107,6 +107,8 @@ def ingest_staged_data_into_source_tables():
         )
 
 '''
+TODO: dbt docker setup (do profiles yml) https://share.google/aimode/Q3LjEnpzYV8nMCjTj
+
 TODO: start with DBT using this library:
 https://astronomer.github.io/astronomer-cosmos/getting_started/index.html
 e.g. https://github.com/astronomer/astronomer-cosmos/blob/main/dev/dags/basic_cosmos_task_group.py
