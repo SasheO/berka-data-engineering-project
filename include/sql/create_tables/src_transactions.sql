@@ -10,6 +10,5 @@ CREATE TABLE IF NOT EXISTS {{ params.db_schema }}.src_transactions (
     k_symbol LowCardinality(String),
     bank String,
     account String
-) ENGINE = MergeTree()
--- PARTITION BY toYYYYMM(date) 
+) ENGINE = ReplacingMergeTree()
 ORDER BY (trans_id);

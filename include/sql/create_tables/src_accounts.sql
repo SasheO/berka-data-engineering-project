@@ -4,6 +4,6 @@ CREATE TABLE IF NOT EXISTS {{ params.db_schema }}.src_accounts (
     district_id UInt64,
     frequency LowCardinality(String),
     `date` String
-) ENGINE = MergeTree()
+) ENGINE = ReplacingMergeTree()
 -- PARTITION BY toYYYYMM(date)
 ORDER BY (account_id);

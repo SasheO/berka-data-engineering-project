@@ -23,5 +23,5 @@ CREATE TABLE IF NOT EXISTS {{ params.db_schema }}.src_demographic_district (
     entrepreneurs_per_1000 UInt64,
     num_crimes_95 UInt64,
     num_crimes_96 UInt64
-) ENGINE = MergeTree()
+) ENGINE = ReplacingMergeTree()
 ORDER BY (district_id);

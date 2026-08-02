@@ -7,6 +7,5 @@ CREATE TABLE IF NOT EXISTS {{ params.db_schema }}.src_loans (
     duration UInt64,
     payments Float32,
     status LowCardinality(String)
-) ENGINE = MergeTree()
--- PARTITION BY toYYYYMM(date)
+) ENGINE = ReplacingMergeTree()
 ORDER BY (loan_id);

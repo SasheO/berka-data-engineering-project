@@ -6,5 +6,5 @@ CREATE TABLE IF NOT EXISTS {{ params.db_schema }}.src_permanent_orders (
     account_to String,
     amount Float32,
     k_symbol LowCardinality(String)
-) ENGINE = MergeTree()
+) ENGINE = ReplacingMergeTree()
 ORDER BY (order_id);

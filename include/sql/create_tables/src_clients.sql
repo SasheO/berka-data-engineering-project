@@ -7,5 +7,5 @@ CREATE TABLE IF NOT EXISTS 	{{ params.db_schema }}.src_clients (
     client_id UInt64,
     birth_number String,
     district_id UInt64
-) ENGINE = MergeTree()
+) ENGINE = ReplacingMergeTree()
 ORDER BY (client_id);

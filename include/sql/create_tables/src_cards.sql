@@ -4,5 +4,5 @@ CREATE TABLE IF NOT EXISTS {{ params.db_schema }}.src_cards (
     disp_id UInt64,
     `type` LowCardinality(String),
     issued String
-) ENGINE = MergeTree()
+) ENGINE = ReplacingMergeTree()
 ORDER BY (card_id);
