@@ -4,12 +4,10 @@ from airflow.models import DAG
 from airflow.operators.python import PythonOperator
 from airflow.decorators import task_group, task
 from airflow.providers.common.sql.operators.sql import SQLExecuteQueryOperator
-from airflow.providers.amazon.aws.operators.s3 import S3CreateBucketOperator
 from airflow.providers.amazon.aws.hooks.s3 import S3Hook
 import io
 import zipfile
 from datetime import datetime, timedelta
-import clickhouse_connect
 from pathlib import Path
 from dotenv import load_dotenv
 from helpers import list_all_files_within_path
@@ -96,7 +94,7 @@ def stream_and_stage_source_data_from_kaggle():
 
                 object_name = file_info.filename[:-4] # sliced to remove ".csv"
 
-                # Upload file object to minios
+                # Upload file object to minio
                 logger.info(f"Uploading {object_name}...")
                 s3_hook.load_file_obj(
                     file_obj=extracted_file,
@@ -107,7 +105,7 @@ def stream_and_stage_source_data_from_kaggle():
 
                 kaggle_file_names.append(object_name)
 
-    logger.info("All files unzipped and transferred successfully!")
+    logger.info("All files unzipped and transferred successfully")
     return kaggle_file_names # put this in context for deleting files later in pipeline
 
 @task_group()

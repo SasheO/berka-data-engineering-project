@@ -1,6 +1,5 @@
 import os
 
-# TODO: add multiline comments to all functions
 def list_all_files_within_path(path: str, with_path_prefix: str = ''):
     if not os.path.exists(path):
         raise FileNotFoundError(f"The directory {path} does not exist.")
@@ -8,5 +7,3 @@ def list_all_files_within_path(path: str, with_path_prefix: str = ''):
         return [with_path_prefix + "/" + f for f in os.listdir(path) if os.path.isfile(os.path.join(path, f))]
     else:
         return [f for f in os.listdir(path) if os.path.isfile(os.path.join(path, f))]
-
-    
