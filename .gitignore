@@ -16,3 +16,4 @@ __pycache__/
 /.vscode
 diagrams.txt
 /log_errors_to_fix
+*.txt

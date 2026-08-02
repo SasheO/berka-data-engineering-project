@@ -50,7 +50,11 @@ profile_config = ProfileConfig(
     target_name="dev",
     profile_mapping=ClickhouseUserPasswordProfileMapping( 
          conn_id="clickhouse_conn", 
-         profile_args={"schema": "berka_analytics"}, 
+         profile_args={
+            "schema": "berka_analytics",
+            "port": 9000, # Use 9000 for native TCP, or keep 8123 as per clickhouse_conn and set driver to 'http'
+            "driver": "native" 
+        },
      ), 
 )
 
@@ -120,29 +124,6 @@ def ingest_staged_data_into_source_tables():
                     "minio_bucket_name": MINIO_BUCKET_NAME,
                     }
         )
-
-'''
-official github (version 1.15.0) https://github.com/astronomer/astronomer-cosmos
-
-https://medium.com/@ajit.0308/run-your-data-platform-locally-with-airflow-dbt-cosmos-and-duckdb-e13ffff2614c
-
-dbt fundamentals: https://learn.getdbt.com/learn/course/dbt-fundamentals/set-up-dbt-60min/getting-started?page=2
-
-start with DBT using this library: https://astronomer.github.io/astronomer-cosmos/getting_started/index.html
-e.g. https://github.com/astronomer/astronomer-cosmos/blob/main/dev/dags/basic_cosmos_task_group.py
-
-https://astronomer.github.io/astronomer-cosmos/getting_started/open-source.html
-
-https://astronomer.github.io/astronomer-cosmos/reference/configs/execution-config.html
-
-tag based scheduling of dbt tasks (render config): https://astronomer.github.io/astronomer-cosmos/guides/translate_dbt_to_airflow/render-config.html
-example: https://shikha-chaturvedi.medium.com/automating-dbt-workflow-scheduling-in-apache-airflow-using-cosmos-ae0b196ecc29
-
-for SCD 2: dbt snapshot natively supports SCD 2 e.g.
-    - all SCD 0-4 in dbt including SCD2 with snapshot: https://www.thedataschool.co.uk/matthias-albert/dbt-snapshots-and-slowly-changing-dimensions-scds/
-    - incremental: https://medium.com/@gharikrishnade/implementing-slowly-changing-dimensions-scd-type-2-in-dbt-a-step-by-step-guide-413a9fffc035
-    - incremental vs snapshot: https://www.linkedin.com/posts/cayo-dias_dbt-dataengineering-analyticsengineering-share-7417312049241894912-vEHf/
-'''
 
 dag = DAG(
     "berka_elt",
