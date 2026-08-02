@@ -6,8 +6,10 @@ sources:
     tables:
       - name: src_accounts
         description: Raw bank accounts table within this bank
-      - name: src_clients
+      - name: src_cards
         description: Raw credit cards data table
+      - name: src_clients
+        description: Raw client data table
       - name: src_demographic_district
         description: Raw demographic district data table
       - name: src_disposition

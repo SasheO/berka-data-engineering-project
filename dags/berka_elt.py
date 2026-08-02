@@ -49,10 +49,10 @@ profile_config = ProfileConfig(
     profile_name="berka_dbt_profile",
     target_name="dev",
     profile_mapping=ClickhouseUserPasswordProfileMapping( 
-         conn_id="clickhouse_conn", 
+         conn_id=CLICKHOUSE_CONN_ID, 
          profile_args={
             "schema": "berka_analytics",
-            "port": 9000, # Use 9000 for native TCP, or keep 8123 as per clickhouse_conn and set driver to 'http'
+            "port": 9000,
             "driver": "native" 
         },
      ), 
@@ -126,10 +126,16 @@ def ingest_staged_data_into_source_tables():
         )
 
 dag = DAG(
-    "berka_elt",
-    # These args will get passed on to each operator
-    # You can override them on a per-task basis during operator initialization
+    dag_id="berka_elt",
+    max_active_runs=1,
+    description="A dag which extracts, loads and transforms data from Berka financial dataset with DBT and Clickhouse",
+    schedule=timedelta(days=1),
+    start_date=datetime(2026, 7, 15),
+    catchup=False,
+    tags=["personal-project", "berka"],
     default_args={
+        # These args will get passed on to each operator
+        # You can override them on a per-task basis during operator initialization
         "depends_on_past": True,
         "retries": 2,
         "retry_delay": timedelta(minutes=5),
@@ -152,11 +158,7 @@ dag = DAG(
             'db_schema': CLICKHOUSE_SCHEMA_NAME,
             },
     },
-    description="A dag which extracts, loads and transforms data from Berka financial dataset with DBT and Clickhouse",
-    schedule=timedelta(days=1),
-    start_date=datetime(2026, 7, 15),
-    catchup=False,
-    tags=["personal-project", "berka"],
+    # where DAG looks for files
     template_searchpath=[DAGS_DIR,
                         # SQL_DDL_SCRIPTS_PATH,
                         SQL_SCRIPTS_PATH,
