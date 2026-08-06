@@ -19,7 +19,7 @@ with clients_with_gender_and_dob as (
 select
     client_id,
     district_id,
-    gender,
+    gender as sex,
     makeDate32(
         toInt32(concat('19', substring(dob, 1, 2))),
         toInt32(substring(dob, 3, 2)),
