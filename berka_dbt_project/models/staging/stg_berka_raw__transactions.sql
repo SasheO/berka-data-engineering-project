@@ -1,5 +1,6 @@
 select
         trans_id as transaction_id,
+        account_id,
         CAST(parseDateTimeBestEffort(concat('19', "date")) AS Date) AS transaction_date,
         CASE "type"
                 WHEN 'PRIJEM' THEN 'credit'
@@ -26,6 +27,6 @@ select
                 WHEN 'UVER' THEN 'loan payment'
                 ELSE ''
         END AS transaction_characterisation,
-        bank as bank_id,
+        bank as bank_code,
         account as partner_account_id
 from {{ source('berka_raw', 'src_transactions') }}

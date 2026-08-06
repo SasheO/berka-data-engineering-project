@@ -140,17 +140,7 @@ dag = DAG(
         'email': EMAIL_ON_FAILURE_LIST,
         'email_on_failure': True,
         'email_on_retry': False,
-        # 'queue': 'bash_queue',
-        # 'pool': 'backfill',
-        # 'priority_weight': 10,
-        # 'end_date': datetime(2016, 1, 1),
-        # 'wait_for_downstream': False,
-        # 'execution_timeout': timedelta(seconds=300),
-        # 'on_failure_callback': some_function, # or list of functions
-        # 'on_success_callback': some_other_function, # or list of functions
-        # 'on_retry_callback': another_function, # or list of functions
-        # 'sla_miss_callback': yet_another_function, # or list of functions
-        # 'on_skipped_callback': another_function, #or list of functions
+        'execution_timeout': timedelta(seconds=1000),
         'trigger_rule': 'all_success',
         'params': {
             'db_schema': CLICKHOUSE_SCHEMA_NAME,
