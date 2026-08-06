@@ -140,7 +140,7 @@ dag = DAG(
         'email': EMAIL_ON_FAILURE_LIST,
         'email_on_failure': True,
         'email_on_retry': False,
-        'execution_timeout': timedelta(seconds=1000),
+        'execution_timeout': timedelta(minutes=10),
         'trigger_rule': 'all_success',
         'params': {
             'db_schema': CLICKHOUSE_SCHEMA_NAME,
