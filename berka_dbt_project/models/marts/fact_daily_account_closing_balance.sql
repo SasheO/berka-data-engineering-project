@@ -1,6 +1,5 @@
--- TODO: add incremental materialization
--- TODO: implement bankers rounding in summed values
--- TODO: change implementation of getting closing balance as highest transaction id balance after to latest transaction of the day
+-- this could be changed to incremental materialization that compares with account_id an accounting_date as the size of data grows and table materialization becomes too slow
+-- TODO: change implementation of getting closing balance to formulaic one. Right now, there is no time on the accounting date, so the highest transaaction ID is used to get closing balance. But this is not true for every single transaction
 WITH ranked_transactions AS (
   SELECT 
     account_id,
@@ -21,8 +20,8 @@ aggregated AS (
     transaction_date as accounting_date,
     district_id,
     count(transaction_id) as number_of_transactions,
-    sum(transaction_amount) as absolute_transaction_value,
-    SUM(CASE WHEN transaction_type = 'withdrawal' THEN -transaction_amount ELSE transaction_amount END) as net_transaction_value
+    round(sum(transaction_amount), 2) as absolute_transaction_value,
+    round(SUM(CASE WHEN transaction_type = 'withdrawal' THEN -transaction_amount ELSE transaction_amount END), 2) as net_transaction_value
   FROM {{ ref('fact_transaction') }}
   GROUP BY account_id, accounting_date, district_id
 )
