@@ -1,0 +1,58 @@
+models:
+  - name: stg_berka_raw__accounts
+    description: Staged model for customer accounts
+    columns:
+      - name: account_id
+        description: Unique primary key for the account
+        data_tests:
+          - unique
+          - not_null
+      - name: district_id
+        description: location of the branch
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('stg_berka_raw__demographic_districts')
+                field: district_id
+      - name: statement_issue_frequency
+        description: frequency of issuance of statements
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: 
+                  - 'monthly issuance'
+                  - 'weekly issuance'
+                  - 'issuance after transaction'
+                  - 'unknown'
+
+  - name: stg_berka_raw__clients
+    description: Staged model for bank customers/clients
+    columns:
+      - name: client_id
+        description: Unique primary key for the client
+        data_tests:
+          - unique
+          - not_null
+      - name: district_id
+        description: location of the branch
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('stg_berka_raw__demographic_districts')
+                field: district_id
+      - name: sex
+        description: client's gender
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: 
+                  - 'M'
+                  - 'F'
+      - name: date_of_birth
+        description: client's date of birth
+        data_tests:
+          - not_null
