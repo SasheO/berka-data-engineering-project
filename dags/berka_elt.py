@@ -112,7 +112,7 @@ def stream_and_stage_source_data_from_kaggle():
 def ingest_staged_data_into_source_tables():
     for file_name, tup in SOURCE_NAME_TO_INGESTION_SCRIPT_MAPPING.items():
         table_name, ingestion_script_name = tup
-        SQLExecuteQueryOperator(
+        ingest = SQLExecuteQueryOperator(
             task_id=f"ingest_into_{table_name}",
             conn_id=CLICKHOUSE_CONN_ID,
             sql="ingestion/"+ingestion_script_name+".sql",
@@ -122,6 +122,15 @@ def ingest_staged_data_into_source_tables():
                     "minio_bucket_name": MINIO_BUCKET_NAME,
                     }
         )
+        deduplicate = SQLExecuteQueryOperator(
+            task_id=f"optimize_{table_name}",
+            conn_id=CLICKHOUSE_CONN_ID,
+            sql="ingestion/optimise_table_deduplicate_clickhouse.sql",
+            params={'db_schema': CLICKHOUSE_SCHEMA_NAME,
+                    "table_name": table_name,
+                    }
+        )
+        ingest >> deduplicate
 
 dag = DAG(
     dag_id="berka_elt",

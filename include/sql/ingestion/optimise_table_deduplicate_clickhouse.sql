@@ -1,0 +1,1 @@
+OPTIMIZE TABLE  {{ params.db_schema }}.{{ params.table_name }}  FINAL;
