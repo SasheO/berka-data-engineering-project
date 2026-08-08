@@ -35,7 +35,7 @@ SELECT
     if(A15 = '?', -1, toInt64(A15)),  -- deal with malformed records with ?
     A16
 FROM s3(
-    '{{ var.value.minio_endpoint }}/{{ params.minio_bucket_name }}/{{  params.file_name  }}',
+    '{{ var.value.minio_endpoint }}/{{ params.minio_bucket_name }}/raw_data/{{  params.file_name  }}',
     '{{ var.value.minio_username }}', 
     '{{ var.value.minio_password }}', 
     'CSVWithNames'

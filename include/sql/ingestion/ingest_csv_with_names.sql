@@ -1,7 +1,7 @@
 INSERT INTO {{ params.db_schema }}.{{ params.table_name }} 
 SELECT * 
 FROM s3(
-    '{{ var.value.minio_endpoint }}/{{ params.minio_bucket_name }}/{{  params.file_name  }}',
+    '{{ var.value.minio_endpoint }}/{{ params.minio_bucket_name }}/raw_data/{{  params.file_name  }}',
     '{{ var.value.minio_username }}', 
     '{{ var.value.minio_password }}', 
     'CSVWithNames'

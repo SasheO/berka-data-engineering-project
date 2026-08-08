@@ -1,7 +1,6 @@
 import logging
 import os
 from airflow.models import DAG
-from airflow.operators.python import PythonOperator
 from airflow.decorators import task_group, task
 from airflow.providers.common.sql.operators.sql import SQLExecuteQueryOperator
 from airflow.providers.amazon.aws.hooks.s3 import S3Hook
@@ -13,6 +12,7 @@ from dotenv import load_dotenv
 from helpers import list_all_files_within_path
 import requests
 from cosmos import DbtTaskGroup, ProjectConfig, ProfileConfig 
+from cosmos.operators import DbtDocsS3Operator
 from cosmos.profiles import ClickhouseUserPasswordProfileMapping
 
 load_dotenv()
@@ -21,7 +21,7 @@ import kaggle as kg # import kaggle ONLY after loading environment variables
 logger = logging.getLogger(__name__)
 
 CLICKHOUSE_CONN_ID = "clickhouse_conn"
-MINIO_BUCKET_NAME = 'berka-raw-data-bucket'
+MINIO_BUCKET_NAME = 'berka-bucket'
 MINIO_CONN_ID = "minio_conn"
 DAGS_DIR = Path(__file__).resolve().parent
 SQL_SCRIPTS_PATH =  "/opt/airflow/include/sql"
@@ -30,6 +30,7 @@ DATASETS_PATH =  "/opt/airflow/datasets"
 EMAIL_ON_FAILURE_LIST = [os.getenv("MY_EMAIL")]
 KAGGLE_KEY=os.getenv('KAGGLE_KEY')
 KAG_USER=os.getenv("KAGGLE_USERNAME")
+BERKA_DBT_PROJECT_PATH="/opt/airflow/berka_dbt_project"
 SOURCE_NAME_TO_INGESTION_SCRIPT_MAPPING = {
     # each record is file_name: (table_name, ingestion_script_name)
         "account": ("src_accounts", "ingest_csv_with_names"),
@@ -57,7 +58,7 @@ profile_config = ProfileConfig(
 )
 
 project_config = ProjectConfig(
-    dbt_project_path="/opt/airflow/berka_dbt_project"
+    dbt_project_path=BERKA_DBT_PROJECT_PATH
     )
 
 @task()
@@ -98,7 +99,7 @@ def stream_and_stage_source_data_from_kaggle():
                 logger.info(f"Uploading {object_name}...")
                 s3_hook.load_file_obj(
                     file_obj=extracted_file,
-                    key=object_name,
+                    key="raw_data/"+object_name,
                     bucket_name=MINIO_BUCKET_NAME,
                     replace=True  # Overwrites the file if it already exists in S3
                 )
@@ -131,6 +132,16 @@ def ingest_staged_data_into_source_tables():
                     }
         )
         ingest >> deduplicate
+
+@task()
+def create_bucket_if_not_exists():
+    hook = S3Hook(aws_conn_id=MINIO_CONN_ID)
+    # Check if the bucket already exists
+    if not hook.check_for_bucket(MINIO_BUCKET_NAME):
+        hook.create_bucket(bucket_name=MINIO_BUCKET_NAME)
+        logger.info(f"Bucket {MINIO_BUCKET_NAME} created successfully.")
+    else:
+        logger.info(f"Bucket {MINIO_BUCKET_NAME} already exists. Skipping creation.")
 
 dag = DAG(
     dag_id="berka_elt",
@@ -183,9 +194,20 @@ with dag:
         profile_config = profile_config,
     )
 
+
+    generate_dbt_docs_to_minio_bucket = DbtDocsS3Operator(
+        task_id="generate_dbt_docs_to_minio_bucket",
+        project_dir=BERKA_DBT_PROJECT_PATH,
+        profile_config=profile_config,
+        connection_id=MINIO_CONN_ID,
+        bucket_name=MINIO_BUCKET_NAME,
+    )
+
+    create_minio_bucket = create_bucket_if_not_exists()
+
     extract_and_stage = stream_and_stage_source_data_from_kaggle()
 
     ingest_clickhouse = ingest_staged_data_into_source_tables()
 
-    create_schema_tables >> create_source_tables >> \
-    extract_and_stage >> ingest_clickhouse >> dbt_models
+    create_schema_tables >> create_source_tables >> create_minio_bucket >> \
+    extract_and_stage >> ingest_clickhouse >> dbt_models >> generate_dbt_docs_to_minio_bucket
