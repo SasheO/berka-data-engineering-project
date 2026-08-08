@@ -1,6 +1,6 @@
 models:
-  - name: stg_berka_raw__accounts
-    description: Staged model for customer accounts
+  - name: dim_account
+    description: Dimesion table for customer accounts
     columns:
       - name: account_id
         description: Unique primary key for the account
@@ -8,12 +8,12 @@ models:
           - unique
           - not_null
       - name: district_id
-        description: Foreign key linking to the district location of the branch
+        description: location of the branch
         data_tests:
           - not_null
           - relationships:
               arguments:
-                to: ref('stg_berka_raw__demographic_districts')
+                to: ref('dim_demographic_district')
                 field: district_id
       - name: statement_issue_frequency
         description: frequency of issuance of statements
@@ -31,8 +31,8 @@ models:
         data_tests:
           - not_null
 
-  - name: stg_berka_raw__clients
-    description: Staged model for bank customers/clients
+  - name: dim_client
+    description: Dimesion table for bank customers/clients
     columns:
       - name: client_id
         description: Unique primary key for the client
@@ -40,13 +40,17 @@ models:
           - unique
           - not_null
       - name: district_id
-        description: location of the branch
+        description: Foreign key linking to the district location of the branch
         data_tests:
           - not_null
           - relationships:
               arguments:
-                to: ref('stg_berka_raw__demographic_districts')
+                to: ref('dim_demographic_district')
                 field: district_id
+      - name: district_name
+        description: Name of the district where branch is located
+        data_tests:
+          - not_null
       - name: sex
         description: client's gender
         data_tests:
@@ -61,8 +65,8 @@ models:
         data_tests:
           - not_null
 
-  - name: stg_berka_raw__credit_cards
-    description: Staged model for credit card information
+  - name: dim_credit_card
+    description: Dimension table for credit card information
     columns:
       - name: credit_card_id
         description: Unique primary key for the credit card
@@ -75,7 +79,7 @@ models:
           - not_null
           - relationships:
               arguments:
-                to: ref('stg_berka_raw__dispositions')
+                to: ref('dim_disposition')
                 field: disposition_id
       - name: credit_card_type
         description: Type of credit card (e.g., classic, gold, junior)
@@ -91,9 +95,13 @@ models:
         description: Date when the credit card was issued (converted from 2-digit year format)
         data_tests:
           - not_null
+      - name: date_of_expiry
+        description: Date when the credit card will expire. Defaults to '9999-12-31' if none in source data
+        data_tests:
+          - not_null
 
-  - name: stg_berka_raw__demographic_districts # TODO: add to documentation that errors in ingestion in some fields lead to -1 value
-    description: Staged model for demographic information by district
+  - name: dim_demographic_district
+    description: Dimension table for demographic information by district
     columns:
       - name: district_id
         description: Unique primary key for the district
@@ -128,6 +136,8 @@ models:
         description: Count of municipalities with more than 10,000 inhabitants
         data_tests:
           - not_null
+      - name: total_number_of_municipalities
+        description: the total number of municipalities
       - name: number_of_cities
         description: Total number of cities in the district
         data_tests:
@@ -140,29 +150,13 @@ models:
         description: Average salary in the district
         data_tests:
           - not_null
-      - name: unemployment_rate_in_95
-        description: Unemployment rate in 1995
-        data_tests:
-          - not_null
-      - name: unemployment_rate_in_96
-        description: Unemployment rate in 1996
-        data_tests:
-          - not_null
       - name: ratio_of_enterpreneurs
         description: Ratio of entrepreneurs to total population
         data_tests:
           - not_null
-      - name: number_of_committed_crimes_in_95
-        description: Number of crimes committed in 1995
-        data_tests:
-          - not_null
-      - name: number_of_committed_crimes_in_96
-        description: Number of crimes committed in 1996
-        data_tests:
-          - not_null
-
-  - name: stg_berka_raw__dispositions
-    description: Staged model for client-account dispositions (ownership relationships)
+  
+  - name: dim_disposition
+    description: Dimension table for client-account dispositions (ownership relationships)
     columns:
       - name: disposition_id
         description: Unique primary key for the disposition record
@@ -175,7 +169,7 @@ models:
           - not_null
           - relationships:
               arguments:
-                to: ref('stg_berka_raw__clients')
+                to: ref('dim_client')
                 field: client_id
       - name: account_id
         description: Foreign key linking to the account
@@ -183,7 +177,7 @@ models:
           - not_null
           - relationships:
               arguments:
-                to: ref('stg_berka_raw__accounts')
+                to: ref('dim_account')
                 field: account_id
       - name: type
         description: Type of disposition (e.g., owner, user, etc.)
@@ -195,51 +189,71 @@ models:
                   - 'OWNER'
                   - 'DISPONENT'
   
-  - name: stg_berka_raw__loans
-    description: Staged model for loans granted to customers. At most, one loan can be granted per account. # TODO: write assert single test that checks this
+  - name: fact_daily_account_closing_balance
+    description: Fact table containing daily closing balances and transaction statistics per account
     columns:
-      - name: loan_id
-        description: Unique primary key for the loan
-        data_tests:
-          - unique
-          - not_null
-      - name: date_granted
-        description: Date when the loan was granted (converted from 2-digit year format)
-        data_tests:
-          - not_null
       - name: account_id
         description: Foreign key linking to the account
         data_tests:
           - not_null
           - relationships:
               arguments:
-                to: ref('stg_berka_raw__accounts')
+                to: ref('dim_account')
                 field: account_id
-      - name: amount_granted
-        description: Total amount of the loan granted
+      - name: accounting_date
+        description: Date of the account closing balance
         data_tests:
           - not_null
-      - name: loan_duration_months
-        description: Duration of the loan in months
+      - name: district_id
+        description: Foreign key linking to the district where the account belongs
         data_tests:
           - not_null
-      - name: monthly_payments_amount
-        description: Monthly payment amount required for the loan
-        data_tests:
-          - not_null
-      - name: loan_status_update
-        description: Status of the loan contract with descriptive explanation
-        data_tests:
-          - not_null
-          - accepted_values:
+          - relationships:
               arguments:
-                values: 
-                  - 'contract finished, no problems'
-                  - 'contract finished, loan not payed'
-                  - 'running contract, OK so far'
-                  - 'running contract, client in debt'
+                to: ref('dim_demographic_district')
+                field: district_id
+      - name: closing_balance
+        description: Daily closing balance of the account
+        data_tests:
+          - not_null
+      - name: number_of_transactions
+        description: Total number of transactions for the account on that day
+        data_tests:
+          - not_null
+      - name: absolute_transaction_value
+        description: Sum of absolute transaction values for the day
+        data_tests:
+          - not_null
+      - name: net_transaction_value
+        description: Net transaction value (credits minus withdrawals) for the day
+        data_tests:
+          - not_null
 
-  - name: stg_berka_raw__transactions
+  - name: fact_district_statistic
+    description: Fact table containing annual district statistics for unemployment and crime rates
+    columns:
+      - name: district_id
+        description: Foreign key linking to the district
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_demographic_district')
+                field: district_id
+      - name: year
+        description: Year of the district statistics
+        data_tests:
+          - not_null
+      - name: unemployment_rate
+        description: Annual unemployment rate for the district
+        data_tests:
+          - not_null
+      - name: number_of_committed_crimes
+        description: Annual number of committed crimes in the district
+        data_tests:
+          - not_null
+
+  - name: fact_transaction
     description: Staged model for transactions processing within this financial institution
     columns:
       - name: transaction_id
@@ -253,7 +267,7 @@ models:
           - not_null
           - relationships:
               arguments:
-                to: ref('stg_berka_raw__accounts')
+                to: ref('dim_account')
                 field: account_id
       - name: transaction_date
         description: Date when the transaction occurred (converted from 2-digit year format)
@@ -309,3 +323,19 @@ models:
         description: Code of the partner bank (if applicable)
       - name: partner_account_id
         description: Partner account ID (if applicable)
+      - name: district_id
+        description:  Foreign key linking to the district tied to the account of this transaction 
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_demographic_district')
+                field: district_id
+      - name: primary_client_id
+        description: Foreign key linking to the primary client of this account
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_client')
+                field: client_id

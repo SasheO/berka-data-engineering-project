@@ -135,6 +135,7 @@ def ingest_staged_data_into_source_tables():
 dag = DAG(
     dag_id="berka_elt",
     max_active_runs=1,
+    max_active_tasks=3,
     description="A dag which extracts, loads and transforms data from Berka financial dataset with DBT and Clickhouse",
     schedule=timedelta(days=1),
     start_date=datetime(2026, 7, 15),

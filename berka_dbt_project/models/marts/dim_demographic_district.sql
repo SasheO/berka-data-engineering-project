@@ -12,7 +12,7 @@ select
         number_of_municipalities_between_500_and_1999_inhabitants +
         number_of_municipalities_between_2000_and_9999_inhabitants +
         number_of_municipalities_greater_than_10000_inhabitants
-    ) as total_number_of_municipalities,
+    ) as total_number_of_municipalities, -- TODO: factor in that ingestion errors cause -1 value, add it to documentations
     number_of_cities,
     urban_ratio,
     average_salary,
