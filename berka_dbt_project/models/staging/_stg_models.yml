@@ -56,3 +56,252 @@ models:
         description: client's date of birth
         data_tests:
           - not_null
+
+  - name: stg_berka_raw__credit_cards
+    description: Staged model for credit card information
+    columns:
+      - name: credit_card_id
+        description: Unique primary key for the credit card
+        data_tests:
+          - unique
+          - not_null
+      - name: disposition_id
+        description: Foreign key linking to the disposition of the card (the client-account the card pertains to)
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('stg_berka_raw__dispositions')
+                field: disposition_id
+      - name: credit_card_type
+        description: Type of credit card (e.g., classic, gold, junior)
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: 
+                  - 'classic'
+                  - 'gold'
+                  - 'junior'
+      - name: date_of_issue
+        description: Date when the credit card was issued (converted from 2-digit year format)
+        data_tests:
+          - not_null
+
+  - name: stg_berka_raw__demographic_districts
+    description: Staged model for demographic information by district
+    columns:
+      - name: district_id
+        description: Unique primary key for the district
+        data_tests:
+          - unique
+          - not_null
+      - name: district_name
+        description: Name of the district
+        data_tests:
+          - not_null
+      - name: region
+        description: Geographic region where the district is located
+        data_tests:
+          - not_null
+      - name: number_of_inhabitants
+        description: Total population of the district
+        data_tests:
+          - not_null
+      - name: number_of_municipalities_fewer_than_499_inhabitants
+        description: Count of municipalities with fewer than 499 inhabitants
+        data_tests:
+          - not_null
+      - name: number_of_municipalities_between_500_and_1999_inhabitants
+        description: Count of municipalities with between 500 and 1999 inhabitants
+        data_tests:
+          - not_null
+      - name: number_of_municipalities_between_2000_and_9999_inhabitants
+        description: Count of municipalities with between 2000 and 9999 inhabitants
+        data_tests:
+          - not_null
+      - name: number_of_municipalities_greater_than_10000_inhabitants
+        description: Count of municipalities with more than 10,000 inhabitants
+        data_tests:
+          - not_null
+      - name: number_of_cities
+        description: Total number of cities in the district
+        data_tests:
+          - not_null
+      - name: urban_ratio
+        description: Ratio of urban population to total population
+        data_tests:
+          - not_null
+      - name: average_salary
+        description: Average salary in the district
+        data_tests:
+          - not_null
+      - name: unemployment_rate_in_95
+        description: Unemployment rate in 1995
+        data_tests:
+          - not_null
+      - name: unemployment_rate_in_96
+        description: Unemployment rate in 1996
+        data_tests:
+          - not_null
+      - name: ratio_of_enterpreneurs
+        description: Ratio of entrepreneurs to total population
+        data_tests:
+          - not_null
+      - name: number_of_committed_crimes_in_95
+        description: Number of crimes committed in 1995
+        data_tests:
+          - not_null
+      - name: number_of_committed_crimes_in_96
+        description: Number of crimes committed in 1996
+        data_tests:
+          - not_null
+
+  - name: stg_berka_raw__dispositions
+    description: Staged model for client-account dispositions (ownership relationships)
+    columns:
+      - name: disposition_id
+        description: Unique primary key for the disposition record
+        data_tests:
+          - unique
+          - not_null
+      - name: client_id
+        description: Foreign key linking to the client
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('stg_berka_raw__clients')
+                field: client_id
+      - name: account_id
+        description: Foreign key linking to the account
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('stg_berka_raw__accounts')
+                field: account_id
+      - name: type
+        description: Type of disposition (e.g., owner, user, etc.)
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: 
+                  - 'OWNER'
+                  - 'DISPONENT'
+  
+  - name: stg_berka_raw__loans
+    description: Staged model for loans granted to customers. At most, one loan can be granted per account. # TODO: write assert single test that checks this
+    columns:
+      - name: loan_id
+        description: Unique primary key for the loan
+        data_tests:
+          - unique
+          - not_null
+      - name: date_granted
+        description: Date when the loan was granted (converted from 2-digit year format)
+        data_tests:
+          - not_null
+      - name: account_id
+        description: Foreign key linking to the account
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('stg_berka_raw__accounts')
+                field: account_id
+      - name: amount_granted
+        description: Total amount of the loan granted
+        data_tests:
+          - not_null
+      - name: loan_duration_months
+        description: Duration of the loan in months
+        data_tests:
+          - not_null
+      - name: monthly_payments_amount
+        description: Monthly payment amount required for the loan
+        data_tests:
+          - not_null
+      - name: loan_status_update
+        description: Status of the loan contract with descriptive explanation
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: 
+                  - 'contract finished, no problems'
+                  - 'contract finished, loan not payed'
+                  - 'running contract, OK so far'
+                  - 'running contract, client in debt'
+
+  - name: stg_berka_raw__transactions
+    description: Staged model for transactions processing within this financial institution
+    columns:
+      - name: transaction_id
+        description: Unique primary key for the transaction
+        data_tests:
+          - unique
+          - not_null
+      - name: account_id
+        description: Foreign key linking to the account tied to this transaction
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('stg_berka_raw__accounts')
+                field: account_id
+      - name: transaction_date
+        description: Date when the transaction occurred (converted from 2-digit year format)
+        data_tests:
+          - not_null
+      - name: transaction_type
+        description: Type of transaction (credit or withdrawal)
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: 
+                  - 'credit'
+                  - 'withdrawal'
+                  - 'unknown'
+      - name: transaction_operation
+        description: Specific operation performed in the transaction
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: 
+                  - 'credit card withdrawal'
+                  - 'credit in cash'
+                  - 'collection from another bank'
+                  - 'withdrawal in cash'
+                  - 'remittance to another bank'
+                  - 'unknown'
+      - name: transaction_amount
+        description: Amount of the transaction
+        data_tests:
+          - not_null
+      - name: account_balance_after_transaction
+        description: Account balance after the transaction was carried out
+        data_tests:
+          - not_null
+      - name: transaction_characterisation
+        description: Characterisation of the transaction purpose
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: 
+                  - 'insurance payment'
+                  - 'payment for statement'
+                  - 'interest credited'
+                  - 'sanction interest if negative balance'
+                  - 'household'
+                  - 'old ­age pension'
+                  - 'loan payment'
+                  - 'unknown'
+      - name: bank_code
+        description: Code of the partner bank (if applicable)
+      - name: partner_account_id
+        description: Partner account ID (if applicable)

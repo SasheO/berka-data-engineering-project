@@ -23,9 +23,9 @@ select
                 WHEN 'UROK' THEN 'interest credited'
                 WHEN 'SANKC. UROK' THEN 'sanction interest if negative balance'
                 WHEN 'SIPO' THEN 'household'
-                WHEN 'DUCHOD' THEN 'old­age pension'
+                WHEN 'DUCHOD' THEN 'old ­age pension'
                 WHEN 'UVER' THEN 'loan payment'
-                ELSE ''
+                ELSE 'unknown'
         END AS transaction_characterisation,
         bank as bank_code,
         account as partner_account_id
