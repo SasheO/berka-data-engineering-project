@@ -21,7 +21,7 @@ import kaggle as kg # import kaggle ONLY after loading environment variables
 logger = logging.getLogger(__name__)
 
 CLICKHOUSE_CONN_ID = "clickhouse_conn"
-MINIO_BUCKET_NAME = 'berka-bucket'
+MINIO_BUCKET_NAME = os.getenv("MINIO_BUCKET_NAME")
 MINIO_CONN_ID = "minio_conn"
 DAGS_DIR = Path(__file__).resolve().parent
 SQL_SCRIPTS_PATH =  "/opt/airflow/include/sql"
@@ -201,6 +201,7 @@ with dag:
         profile_config=profile_config,
         connection_id=MINIO_CONN_ID,
         bucket_name=MINIO_BUCKET_NAME,
+        folder_dir="/dbt_docs"
     )
 
     create_minio_bucket = create_bucket_if_not_exists()

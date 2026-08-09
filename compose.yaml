@@ -32,6 +32,8 @@ x-airflow-common:
     # The following line can be used to set a custom config file, stored in the local config folder
     AIRFLOW_CONFIG: '/opt/airflow/config/airflow.cfg'
     AIRFLOW__CORE__TEST_CONNECTION: 'Enabled'
+    AIRFLOW__COSMOS__DBT_DOCS_DIR: "s3://${MINIO_BUCKET_NAME}/dbt_docs"
+    AIRFLOW__COSMOS__DBT_DOCS_CONN_ID: "minio_conn"
   volumes:
     - ${AIRFLOW_PROJ_DIR:-.}/dags:/opt/airflow/dags
     - ${AIRFLOW_PROJ_DIR:-.}/include:/opt/airflow/include
