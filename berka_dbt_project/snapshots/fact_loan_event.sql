@@ -36,12 +36,11 @@
 select 
    loan_id,
    date_granted,
-   loans.account_id,
+   loans.account_id as account_id,
    amount_granted,
    loan_duration_months,
    monthly_payments_amount,
    loan_status_update,
-   account_id,
    clients.client_id as primary_client_id,
    district_id
 from loans 

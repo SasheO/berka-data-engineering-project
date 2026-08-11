@@ -1,0 +1,109 @@
+models:
+  - name: dim_client_district_historical
+    description: Dimesion table for historical client districts (SCD Type 4)
+    columns:
+      - name: client_id
+        description: Unique primary key for the account
+        data_tests:
+          - not_null
+      - name: district_id
+        description: Foreign key linking to the district location of client
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_demographic_district')
+                field: district_id
+      - name: district_name
+        description: Name of the district (as at the time of this record's creation)
+        data_tests:
+          - not_null
+      - name: dbt_scd_id
+        description: Primary key identifying each historical record uniquely. Should be renamed `client_district_historical_entry_id` in downstream models.
+        data_tests:
+          - not_null
+          - unique
+      - name: dbt_updated_at
+        description: Date when this record was updated
+        data_tests:
+          - not_null
+      - name: dbt_valid_from
+        description: Date from which this client's district address is valid from
+        data_tests:
+          - not_null
+      - name: dbt_valid_to
+        description: Date from which this client's district address is valid to. If the district address is still valid, this field is null
+
+
+  - name: fact_loan_event
+    columns:
+      - name: loan_id
+        description: ID identifying the loan this event refers to
+        data_tests:
+          - not_null
+      - name: date_granted
+        description: Date when the loan was granted (converted from 2-digit year format)
+        data_tests:
+          - not_null
+      - name: account_id
+        description: Foreign key linking to the account
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_account')
+                field: account_id
+      - name: amount_granted
+        description: Total amount of the loan granted
+        data_tests:
+          - not_null
+      - name: loan_duration_months
+        description: Duration of the loan in months
+        data_tests:
+          - not_null
+      - name: monthly_payments_amount
+        description: Monthly payment amount required for the loan
+        data_tests:
+          - not_null
+      - name: loan_status_update
+        description: Status of the loan contract with descriptive explanation
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: 
+                  - 'contract finished, no problems'
+                  - 'contract finished, loan not payed'
+                  - 'running contract, OK so far'
+                  - 'running contract, client in debt'
+      - name: primary_client_id
+        description: Foreign key linking to the primary client of this account
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_client')
+                field: client_id
+      - name: district_id
+        description: Foreign key linking to the district location tied to the account of the loan
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_demographic_district')
+                field: district_id
+      - name: dbt_scd_id
+        description: Primary key identifying each historical record uniquely. Should be renamed `loan_event_id` in downstream models.
+        data_tests:
+          - not_null
+          - unique
+      - name: dbt_updated_at
+        description: Date when this record was updated
+        data_tests:
+          - not_null
+      - name: dbt_valid_from
+        description: Date from which this loan status is valid from
+        data_tests:
+          - not_null
+      - name: dbt_valid_to
+        description: Date from which this loan status is valid to. If the district address is still valid, this field is null
