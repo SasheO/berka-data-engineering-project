@@ -11,7 +11,8 @@ from pathlib import Path
 from dotenv import load_dotenv
 from helpers import list_all_files_within_path
 import requests
-from cosmos import DbtTaskGroup, ProjectConfig, ProfileConfig 
+from cosmos import DbtTaskGroup, ProjectConfig, ProfileConfig, RenderConfig
+from cosmos.constants import TestBehavior
 from cosmos.operators import DbtDocsS3Operator
 from cosmos.profiles import ClickhouseUserPasswordProfileMapping
 
@@ -59,6 +60,11 @@ profile_config = ProfileConfig(
 
 project_config = ProjectConfig(
     dbt_project_path=BERKA_DBT_PROJECT_PATH
+    )
+
+render_config=RenderConfig(
+        test_behavior=TestBehavior.AFTER_EACH,
+        should_detach_multiple_parents_tests=True,
     )
 
 @task()
@@ -192,6 +198,7 @@ with dag:
         group_id = "dbt_models",
         project_config = project_config,
         profile_config = profile_config,
+        render_config = render_config,
     )
 
 

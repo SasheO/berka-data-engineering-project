@@ -1,4 +1,4 @@
-models:
+snapshots:
   - name: dim_client_district_historical
     description: Dimesion table for historical client districts (SCD Type 4)
     columns:
