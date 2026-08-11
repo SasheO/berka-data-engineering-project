@@ -1,6 +1,6 @@
 models:
   - name: stg_berka_raw__accounts
-    description: Staged model for customer accounts
+    description: Staged model for customer accounts. Grain - One row per account
     columns:
       - name: account_id
         description: Unique primary key for the account
@@ -32,7 +32,7 @@ models:
           - not_null
 
   - name: stg_berka_raw__clients
-    description: Staged model for bank customers/clients
+    description: Staged model for bank customers/clients. Grain - One row per client
     columns:
       - name: client_id
         description: Unique primary key for the client
@@ -62,7 +62,7 @@ models:
           - not_null
 
   - name: stg_berka_raw__credit_cards
-    description: Staged model for credit card information
+    description: Staged model for credit card information. Grain - One row per card
     columns:
       - name: credit_card_id
         description: Unique primary key for the credit card
@@ -93,7 +93,7 @@ models:
           - not_null
 
   - name: stg_berka_raw__demographic_districts # TODO: add to documentation that errors in ingestion in some fields lead to -1 value
-    description: Staged model for demographic information by district
+    description: Staged model for demographic information by district. Grain - One row per district
     columns:
       - name: district_id
         description: Unique primary key for the district
@@ -162,7 +162,7 @@ models:
           - not_null
 
   - name: stg_berka_raw__dispositions
-    description: Staged model for client-account dispositions (ownership relationships)
+    description: Staged model for client-account dispositions (ownership relationships). Grain - One row per disposition of an account
     columns:
       - name: disposition_id
         description: Unique primary key for the disposition record
@@ -196,7 +196,7 @@ models:
                   - 'DISPONENT'
   
   - name: stg_berka_raw__loans
-    description: Staged model for loans granted to customers. At most, one loan can be granted per account. # TODO: write assert single test that checks this
+    description: Staged model for loans granted to customers. At most, one loan can be granted per account. Grain - One row per loan # TODO: write assert single test that checks this At most, one loan can be granted per account
     columns:
       - name: loan_id
         description: Unique primary key for the loan
@@ -240,7 +240,7 @@ models:
                   - 'running contract, client in debt'
 
   - name: stg_berka_raw__transactions
-    description: Staged model for transactions processing within this financial institution
+    description: Staged model for transactions processing within this financial institution. Grain - One row per transaction per account
     columns:
       - name: transaction_id
         description: Unique primary key for the transaction

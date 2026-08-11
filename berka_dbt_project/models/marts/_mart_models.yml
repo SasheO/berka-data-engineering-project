@@ -1,6 +1,6 @@
 models:
   - name: dim_account
-    description: Dimesion table for customer accounts
+    description: Dimesion table for customer accounts. Grain - One row per account
     columns:
       - name: account_id
         description: Unique primary key for the account
@@ -32,7 +32,7 @@ models:
           - not_null
 
   - name: dim_client
-    description: Dimesion table for bank customers/clients
+    description: Dimesion table for bank customers/clients. Grain - One row per client
     columns:
       - name: client_id
         description: Unique primary key for the client
@@ -66,7 +66,7 @@ models:
           - not_null
 
   - name: dim_credit_card
-    description: Dimension table for credit card information
+    description: Dimension table for credit card information. Grain - One row per card
     columns:
       - name: credit_card_id
         description: Unique primary key for the credit card
@@ -101,7 +101,7 @@ models:
           - not_null
 
   - name: dim_demographic_district
-    description: Dimension table for demographic information by district
+    description: Dimension table for demographic information by district. Grain - One row per district
     columns:
       - name: district_id
         description: Unique primary key for the district
@@ -156,7 +156,7 @@ models:
           - not_null
   
   - name: dim_disposition
-    description: Dimension table for client-account dispositions (ownership relationships)
+    description: Dimension table for client-account dispositions (ownership relationships). Grain - One row per disposition of an account
     columns:
       - name: disposition_id
         description: Unique primary key for the disposition record
@@ -190,7 +190,7 @@ models:
                   - 'DISPONENT'
   
   - name: fact_daily_account_closing_balance
-    description: Fact table containing daily closing balances and transaction statistics per account
+    description: Fact table containing daily closing balances and transaction statistics per account. Grain - One row per account per day
     columns:
       - name: account_id
         description: Foreign key linking to the account
@@ -230,7 +230,7 @@ models:
           - not_null
 
   - name: fact_district_statistic
-    description: Fact table containing annual district statistics for unemployment and crime rates
+    description: Fact table containing annual district statistics for unemployment and crime rates. Grain - One row per year per district
     columns:
       - name: district_id
         description: Foreign key linking to the district
@@ -254,7 +254,7 @@ models:
           - not_null
 
   - name: fact_transaction
-    description: Staged model for transactions processing within this financial institution
+    description: Staged model for transactions processing within this financial institution. Grain - One row per transaction per account
     columns:
       - name: transaction_id
         description: Unique primary key for the transaction

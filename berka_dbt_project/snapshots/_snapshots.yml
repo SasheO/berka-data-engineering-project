@@ -1,6 +1,6 @@
 snapshots:
   - name: dim_client_district_historical
-    description: Dimesion table for historical client districts (SCD Type 4)
+    description: Dimesion table for historical client districts (SCD Type 4). Grain - One row per district per client
     columns:
       - name: client_id
         description: Unique primary key for the account
@@ -36,6 +36,7 @@ snapshots:
 
 
   - name: fact_loan_event
+    description: Fact table for each time the status of loan changes after initial granting. Grain - One row per loan status per account.
     columns:
       - name: loan_id
         description: ID identifying the loan this event refers to
