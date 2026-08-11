@@ -1,3 +1,9 @@
+{{
+  config(
+    materialized = 'incremental',
+    unique_key = 'transaction_id',
+  )
+}}
 with transactions as (
     select 
         transaction_id,
@@ -11,6 +17,9 @@ with transactions as (
         bank_code,
         partner_account_id
     from {{ ref('stg_berka_raw__transactions') }}
+    {% if is_incremental() %}
+        where transaction_date >= dateadd(day, -31, current_date) -- only load current accounting period's transactions
+    {% endif %}
 ),
 primary_clients as (
     select
