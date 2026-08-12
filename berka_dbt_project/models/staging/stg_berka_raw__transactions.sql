@@ -16,7 +16,8 @@ select
                 ELSE 'unknown'
         END AS transaction_operation,
         amount as transaction_amount,
-        balance as account_balance_after_transaction,
+        balance_after as account_balance_after_transaction,
+        balance_before as account_balance_before_transaction,
         CASE k_symbol
                 WHEN 'POJISTNE' THEN 'insurance payment'
                 WHEN 'SLUZBY' THEN 'payment for statement'
@@ -28,5 +29,6 @@ select
                 ELSE 'unknown'
         END AS transaction_characterisation,
         bank as bank_code,
-        account as partner_account_id
-from {{ source('berka_raw', 'src_transactions') }}
+        account as partner_account_id,
+        subsequent_trans_id as transaction_id_immediately_after_on_same_day -- TODO: document this and account_balance_before_transaction in DBT docs
+from {{ source('berka_raw', 'src_transactions_enriched') }}

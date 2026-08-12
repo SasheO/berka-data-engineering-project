@@ -27,7 +27,6 @@ MINIO_CONN_ID = "minio_conn"
 DAGS_DIR = Path(__file__).resolve().parent
 SQL_SCRIPTS_PATH =  "/opt/airflow/include/sql"
 SQL_DDL_SCRIPTS_PATH_PREFIX = 'create_tables'
-DATASETS_PATH =  "/opt/airflow/datasets"
 EMAIL_ON_FAILURE_LIST = [os.getenv("MY_EMAIL")]
 KAGGLE_KEY=os.getenv('KAGGLE_KEY')
 KAG_USER=os.getenv("KAGGLE_USERNAME")
@@ -38,7 +37,7 @@ SOURCE_NAME_TO_INGESTION_SCRIPT_MAPPING = {
         "card": ("src_cards", "ingest_csv_with_names"),
         "client": ("src_clients", "ingest_csv_with_names"),
         "disp": ("src_disposition", "ingest_csv_with_names"),
-        "district": ("src_demographic_district", "src_demographic_district"),
+        "district": ("src_demographic_district", "src_demographic_districts"),
         "loan": ("src_loans", "ingest_csv_with_names"),
         "order": ("src_permanent_orders", "ingest_csv_with_names"),
         "trans": ("src_transactions", "ingest_csv_with_names"),
@@ -60,6 +59,11 @@ profile_config = ProfileConfig(
 
 project_config = ProjectConfig(
     dbt_project_path=BERKA_DBT_PROJECT_PATH
+    )
+
+render_config=RenderConfig(
+        test_behavior=TestBehavior.AFTER_EACH,
+        should_detach_multiple_parents_tests=True,
     )
 
 @task()
@@ -168,9 +172,7 @@ dag = DAG(
     },
     # where DAG looks for files
     template_searchpath=[DAGS_DIR,
-                        # SQL_DDL_SCRIPTS_PATH,
-                        SQL_SCRIPTS_PATH,
-                        DATASETS_PATH
+                        SQL_SCRIPTS_PATH
                          ],
 )
 
@@ -187,26 +189,18 @@ with dag:
     sql=list_all_files_within_path(SQL_SCRIPTS_PATH+"/"+SQL_DDL_SCRIPTS_PATH_PREFIX, SQL_DDL_SCRIPTS_PATH_PREFIX)
     )
 
-    dbt_staging_models = DbtTaskGroup(
-        group_id = "dbt_staging_models",
-        project_config = project_config,
-        profile_config = profile_config,
-        render_config = RenderConfig(
-            test_behavior=TestBehavior.AFTER_EACH,
-            should_detach_multiple_parents_tests=True,
-            select=["tag:staging"]
-        )
+    enrich_transactions = SQLExecuteQueryOperator(
+    task_id="enrich_transactions_with_ordering",
+    conn_id=CLICKHOUSE_CONN_ID,
+    sql=f"ingestion/src_transactions_enriched.sql",
+    params={'db_schema': CLICKHOUSE_SCHEMA_NAME}
     )
 
-    dbt_mart_and_snapshot_models = DbtTaskGroup(
-        group_id = "dbt_mart_and_snapshot_models",
+    dbt_models = DbtTaskGroup(
+        group_id = "dbt_models",
         project_config = project_config,
         profile_config = profile_config,
-        render_config = RenderConfig(
-            test_behavior=TestBehavior.AFTER_EACH,
-            should_detach_multiple_parents_tests=True,
-            select=["tag:marts", "tag:snapshots"]
-        )
+        render_config = render_config,
     )
 
     generate_dbt_docs_to_minio_bucket = DbtDocsS3Operator(
@@ -225,4 +219,5 @@ with dag:
     ingest_clickhouse = ingest_staged_data_into_source_tables()
 
     create_schema_tables >> create_source_tables >> create_minio_bucket >> \
-    extract_and_stage >> ingest_clickhouse >> dbt_staging_models >> dbt_mart_and_snapshot_models >> generate_dbt_docs_to_minio_bucket
+    extract_and_stage >> ingest_clickhouse >> enrich_transactions >> \
+    dbt_models >> generate_dbt_docs_to_minio_bucket
