@@ -98,13 +98,44 @@ The DAG will run and populate various staging, dimension, snapshot, and fact tab
 To query ClickHouse tables, open up the ClickHouse Web UI at http://localhost:8123/. Put in your default username and password in the dialogue boxes for credentials at the top left of the screen. Run your queries in the query box. Some sample queries are: 
 
 ```sql
--- TODO: insert query that answers "What is the total transaction volume per account per month?"
+-- Sample query that answers "What is the total transaction volume per account per month?"
+SELECT
+    year(transaction_date) as "year", 
+    month(transaction_date) as "month", 
+    account_id, 
+    round(sum(transaction_amount), 2) as total_monthly_transaction_volume
+FROM berka_analytics.fact_transaction
+GROUP BY "year", "month", account_id
+ORDER BY account_id, "year", "month"
 
--- TODO: insert query that answers "Which districts have the highest loan default rates?"
-
--- TODO: insert query that answers "How do client demographics correlate with loan outcomes?"
-
--- TODO: insert query that answers "What is the balance trend over time for accounts that also have a credit card?"
+-- Sample query that answers "Which districts have the highest loan default rates?"
+WITH
+    all_loans AS (
+        SELECT  
+            COUNT(DISTINCT loan_id) AS all_loan_count, district_id
+        FROM berka_analytics.fact_loan_event AS fle
+        JOIN berka_analytics.dim_account AS da
+        ON fle.account_id = da.account_id
+        GROUP BY district_id
+    ),
+    defaulted_loans AS (
+            SELECT  
+            COUNT(DISTINCT loan_id) AS defaulted_loan_count, district_id
+        FROM berka_analytics.fact_loan_event AS fle
+        JOIN berka_analytics.dim_account AS da
+        ON fle.account_id = da.account_id
+        WHERE loan_status_update in ('contract finished, loan not payed', 'running contract, client in debt')
+        GROUP BY district_id
+    )
+SELECT
+    al.district_id as district_id,
+    defaulted_loan_count,
+    all_loan_count,
+    (defaulted_loan_count/all_loan_count) as fraction_of_defaulted_loans
+FROM all_loans al 
+LEFT JOIN defaulted_loans dl
+ON al.district_id = dl.district_id
+ORDER BY fraction_of_defaulted_loans DESC
 
 ```
 
