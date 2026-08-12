@@ -34,5 +34,11 @@ models:
     # Config indicated by + and applies to all files under models/example/
     marts:
       +materialized: table
+      +tags: ["marts"]
     staging:
       +materialized: view
+      +tags: ["staging"]
+
+snapshots:
+  berka_dbt_project:
+    +tags: ["snapshots"]
