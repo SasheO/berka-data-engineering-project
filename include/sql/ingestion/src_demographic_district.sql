@@ -29,7 +29,7 @@ SELECT
     A9,
     A10,
     A11,
-    if(A12 = '?', -1, toFloat32(A12)),  -- deal with malformed records with ?
+    if(A12 = '?', -1, toFloat32(A12)),  -- deal with malformed records with ? TODO: improve implementation so it works on every column
     A13,
     A14,
     if(A15 = '?', -1, toInt64(A15)),  -- deal with malformed records with ?
