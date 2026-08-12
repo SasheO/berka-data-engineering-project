@@ -18,9 +18,11 @@ Set `CLICKHOUSE_USER` to `default` and pick your preferred ClickHouse password.
 Create Kaggle login credentials using api key, put credentials in .env file as `KAGGLE_USERNAME` and `KAGGLE_KEY`
 
 To configure user permissions:
-* If you’re using Linux, set a user ID to prevent permission issues when Docker writes files locally:
-echo -e "AIRFLOW_UID=$(id -u)". Copy that into AIRFLOW_UID in .env
-* If you’re using macOS or Windows, leave the value as is: `AIRFLOW_UID=50000`
+* If you’re using Linux, set a user ID to prevent permission issues when Docker writes files locally. Run this in your terminal and copy the value into `AIRFLOW_UID` in your `.env` file:
+```
+echo -e "AIRFLOW_UID=$(id -u)"
+```
+* If you’re using macOS or Windows, leave the value in your `.env` file as is: `AIRFLOW_UID=50000`
 
 
 ### Set Up Connections and Variables in Airflow
@@ -57,11 +59,14 @@ If you test the MinIO connections, it may fail. This is completely normal becaus
 Go to `admin` > `Variable` and click the `+` sign to create a new variable. The variables to add are:
 set up variabes in airflow:
 * name: minio_endpoint
+    
     value: http://minio:9000
 * name: minio_password
-    value: with what is in your .env file.
+    
+    value: what is in your .env file.
 * name: minio_username
-    value: with what is in your .env file.
+    
+    value: what is in your .env file.
 
 
 ## Steps to Run the DAG and Inspect Results by Querying ClickHouse Tables
@@ -71,18 +76,28 @@ Toggle the button at the top-left of the screen to unpause the DAG. If the pipel
 
 The DAG will run and populate various staging, dimension, snapshot, and fact tables in `berka_analytics` schema. The source data that was ingested raw will be in `berka_raw` schema.
 
-To query ClickHouse tables, open up the [ClickHouse Web UI](http://localhost:8123/). Put in your default username and password in the dialogue boxes for credentials at the top left of the screen. Run your queries in the query box. An example of a query that shows which districts have the highest loan default rates:
-
+To query ClickHouse tables, open up the ClickHouse Web UI at http://localhost:8123/. Put in your default username and password in the dialogue boxes for credentials at the top left of the screen. Run your queries in the query box. Some sample queries are: 
 ```sql
-SELECT -- TODO: insert
+-- TODO: insert query that answers "What is the total transaction volume per account per month?"
+
+-- TODO: insert query that answers "Which districts have the highest loan default rates?"
+
+-- TODO: insert query that answers "How do client demographics correlate with loan outcomes?"
+
+-- TODO: insert query that answers "What is the balance trend over time for accounts that also have a credit card?"
+
 ```
 
 The DAG will also generate DBT docs with descriptions of tables, columns, relationships, dependencies, data tests, and more which are viewable within the Airflow webserver if you click `browse` > `DBT Docs`.
 
 ## Dimensional Model
-Here is a link to the dimensional model with description on each table and many fields: [Dimensonal Model](https://dbdiagram.io/d/berka-dataset-v2-6a4e96184ac62e474c5dd29c). DBT Docs in the [Airflow webserver](http://localhost:8080/) also shows this same information but on a physical implementation rather than logical level.
+Here is a link to the dimensional model with description on each table and many fields: [Dimensonal Model](https://dbdiagram.io/d/berka-dataset-v2-6a4e96184ac62e474c5dd29c). 
+
 
 ![Dimensional model diagram](images/erd.png)
+
+
+DBT Docs in the [Airflow webserver](http://localhost:8080/) also shows this same information but on a physical implementation rather than logical level.
 
 ### Reasons for Various Design Choices
 
