@@ -159,9 +159,7 @@ dag = DAG(
     catchup=False,
     tags=["personal-project", "berka"],
     default_args={
-        # These args will get passed on to each operator
-        # You can override them on a per-task basis during operator initialization
-        "depends_on_past": True,
+        "depends_on_past": True, # so if a relationship data test fails for example (they are not fail-fast but run after all berka tasks), data quality issues don't compound. The DE gets a notification and can resolve the issue before future runs.
         "retries": 2,
         "retry_delay": timedelta(minutes=5),
         'email': EMAIL_ON_FAILURE_LIST,

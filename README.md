@@ -1,6 +1,24 @@
 # berka-data-engineering-project
 
 ## Overview of the project and the business problem
+Retail banks generate enormous volumes of transactional data every day. Account holders make payments, take out loans, and operate credit cards across multiple branches and time periods. Without a structured analytics layer on top of this activity, the data sits in an operational system that was designed for writes, not analysis. Answering even basic questions like "what is the loan default rate by district?" or "which clients hold both a credit card and an active loan?" becomes expensive and slow.
+
+This project automates the process of extracting that operational data, staging it in object storage, validating it, modelling it into an analytical schema, and loading it into a data warehouse. The source is the Berka Dataset, a collection of real anonymised financial records from a Czech bank, originally released for the PKDD'99 Discovery Challenge. It covers 5,369 clients, 4,500 accounts, over 1 million transactions, 682 loans, and 892 credit cards, spread across 8 relational tables.
+
+The business problem this pipeline addresses is straightforward: the bank's operational data cannot support reporting and analytics in its current form. Queries over raw OLTP tables are slow, joins are complex, and there is no consistent logic for how metrics like balance movement or loan performance are calculated. A data engineer's job here is to move this data into a warehouse in a shape that analysts can actually use, reliably and repeatably.
+
+The business value delivered:
+* Timely access to integrated financial data for dashboards and reporting
+* Data consistency and schema enforcement across all 8 source tables
+* A dimensional model that makes cross-table analysis straightforward
+* Automation that removes manual overhead and makes the pipeline repeatable
+
+
+### Dataset
+The dataset is the Berka Dataset (PKDD'99 Czech Financial Dataset), a collection of real anonymised records from a Czech bank spanning the years 1993 to 1999.
+
+It is available via the Kaggle API at:
+https://www.kaggle.com/datasets/marceloventura/the-berka-dataset
 
 ## Pipeline Architecture
 ![Pipeline architecture diagram](images/pipeline_architecture.png)
@@ -55,7 +73,8 @@ Go to `admin` > `connections` and click the `+` sign to create a new connection.
 ```
 If you test the MinIO connections, it may fail. This is completely normal because Airflow's test engine inherently tries to reach the live AWS Security Token Service (STS) endpoint to validate credentials, which local MinIO services do not support. Save the connection anyway. It will still work perfectly in your DAGs.
 
-**Variables**
+**Variables:**
+
 Go to `admin` > `Variable` and click the `+` sign to create a new variable. The variables to add are:
 set up variabes in airflow:
 * name: minio_endpoint
@@ -70,13 +89,14 @@ set up variabes in airflow:
 
 
 ## Steps to Run the DAG and Inspect Results by Querying ClickHouse Tables
-From the [Airflow webserver](http://localhost:8080/), type in  `berka_elt` in the search bar to find the DAG. Click on the berka DAG.
+From the [Airflow webserver](http://localhost:8080/), type in  "berka_elt" in the search bar to find the DAG. Click on the berka DAG.
 
 Toggle the button at the top-left of the screen to unpause the DAG. If the pipeline does not get automatically triggerred after unpausing it, you can trigger it by clicking the play button at the top-left of the page.
 
 The DAG will run and populate various staging, dimension, snapshot, and fact tables in `berka_analytics` schema. The source data that was ingested raw will be in `berka_raw` schema.
 
 To query ClickHouse tables, open up the ClickHouse Web UI at http://localhost:8123/. Put in your default username and password in the dialogue boxes for credentials at the top left of the screen. Run your queries in the query box. Some sample queries are: 
+
 ```sql
 -- TODO: insert query that answers "What is the total transaction volume per account per month?"
 
