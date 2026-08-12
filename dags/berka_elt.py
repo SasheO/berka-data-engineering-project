@@ -62,11 +62,6 @@ project_config = ProjectConfig(
     dbt_project_path=BERKA_DBT_PROJECT_PATH
     )
 
-render_config=RenderConfig(
-        test_behavior=TestBehavior.AFTER_EACH,
-        should_detach_multiple_parents_tests=True,
-    )
-
 @task()
 def stream_and_stage_source_data_from_kaggle():
     dataset_name = "marceloventura/the-berka-dataset"
@@ -192,13 +187,27 @@ with dag:
     sql=list_all_files_within_path(SQL_SCRIPTS_PATH+"/"+SQL_DDL_SCRIPTS_PATH_PREFIX, SQL_DDL_SCRIPTS_PATH_PREFIX)
     )
 
-    dbt_models = DbtTaskGroup(
-        group_id = "dbt_models",
+    dbt_staging_models = DbtTaskGroup(
+        group_id = "dbt_staging_models",
         project_config = project_config,
         profile_config = profile_config,
-        render_config = render_config,
+        render_config = RenderConfig(
+            test_behavior=TestBehavior.AFTER_EACH,
+            should_detach_multiple_parents_tests=True,
+            select=["tag:staging"]
+        )
     )
 
+    dbt_mart_and_snapshot_models = DbtTaskGroup(
+        group_id = "dbt_mart_and_snapshot_models",
+        project_config = project_config,
+        profile_config = profile_config,
+        render_config = RenderConfig(
+            test_behavior=TestBehavior.AFTER_EACH,
+            should_detach_multiple_parents_tests=True,
+            select=["tag:marts", "tag:snapshots"]
+        )
+    )
 
     generate_dbt_docs_to_minio_bucket = DbtDocsS3Operator(
         task_id="generate_dbt_docs_to_minio_bucket",
@@ -216,4 +225,4 @@ with dag:
     ingest_clickhouse = ingest_staged_data_into_source_tables()
 
     create_schema_tables >> create_source_tables >> create_minio_bucket >> \
-    extract_and_stage >> ingest_clickhouse >> dbt_models >> generate_dbt_docs_to_minio_bucket
+    extract_and_stage >> ingest_clickhouse >> dbt_staging_models >> dbt_mart_and_snapshot_models >> generate_dbt_docs_to_minio_bucket
