@@ -137,6 +137,25 @@ LEFT JOIN defaulted_loans dl
 ON al.district_id = dl.district_id
 ORDER BY fraction_of_defaulted_loans DESC
 
+-- Sample query that answers "What is the balance trend over time for accounts that also have a credit card?"
+SELECT 
+    account_id,
+    accounting_date,
+    closing_balance
+FROM berka_analytics.fact_daily_account_closing_balance
+WHERE account_id in 
+    (
+    SELECT 
+        account_id
+    FROM berka_analytics.dim_disposition
+    WHERE disposition_id IN (
+        SELECT
+            disposition_id
+        FROM berka_analytics.dim_credit_card
+    )
+)
+ORDER BY account_id, accounting_date
+
 ```
 
 The DAG will also generate DBT docs with descriptions of tables, columns, relationships, dependencies, data tests, and more which are viewable within the Airflow webserver if you click `browse` > `DBT Docs`.
