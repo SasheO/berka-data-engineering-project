@@ -172,6 +172,17 @@ DBT Docs in the [Airflow webserver](http://localhost:8080/) also shows this same
 ### Reasons for Various Design Choices
 
 ## Tests and Validation
+Appropriate unique, not null, accepted values, and relationships tests are implemented in every model. Full documentations can be viewed in DBT docs in the Airflow webserver (click `browse` > `DBT Docs`).
+
+Failure of various any of these tests would lead to the pipeline being blocked after the Airflow task fails, preventing data quality issues from propagating to downstream models.
+
+To test run this, I ran a query that inserts duplicate rows in the source table for bank accounts:
+![Query to insert duplicate rows in src_accounts table](images/query_inserting_errors_in_clickhouse_web_server.png)
+
+While in other runs, the staging model for bank accounts (which is materialised as a view on the source table) passes all its data quality checks, after running the above query, the unique tests fail:
+![Query to insert duplicate rows in src_accounts table](images/unique_test_failing_after_duplicate_insertions.png)
 
 
 ## Known limitations and ideas for extending the project
+
+The major limitations of this dataset comes from the source data which is historical. Thus, though there are various fact, dimensional, and snapshot tables, they never change because they are populated with the same data at each run. Ideas for extending this project include finding a real-time source of financial bank data rather than a historical one.
