@@ -170,6 +170,15 @@ Here is a link to the dimensional model with description on each table and many 
 DBT Docs in the [Airflow webserver](http://localhost:8080/) also shows this same information but on a physical implementation rather than logical level.
 
 ### Reasons for Various Design Choices
+Although the data source is historical and small in size, I designed the dimensional model with the assumption that the data would grow.
+
+Some guiding questions I started this design process with were:
+> What is the total transaction volume per account per month?
+> Which districts have the highest loan default rates?
+> How do client demographics correlate with loan outcomes?
+> What is the balance trend over time for accounts that also have a credit card?
+
+Many models are denormalised. For example, `dim_client` does not only include a `district_id` foreign key column that joins to the `dim_demographic_district` dimension table, but it also includes duplicated `district_name` field. This is because I wanted most common potential questions a business user would ask (like the ones above) to be answerable in three JOINS or less as the database used is ClickHouse, a JOIN-slow OLAP database.
 
 ## Tests and Validation
 Appropriate unique, not null, accepted values, and relationships tests are implemented in every model. Full documentations can be viewed in DBT docs in the Airflow webserver (click `browse` > `DBT Docs`).
