@@ -59,18 +59,24 @@ subsequent_trans_ids as (
     from balances_before_and_after t1
     left join balances_before_and_after t2
     on t1.date = t2.date and t1.account_id = t2.account_id and abs(t1.balance_after-t2.balance_before) < 0.1
+),
+row_numbered as (
+    select 
+        trans_id,
+        account_id,
+        `date`,
+        `type`,
+        operation,
+        amount,
+        balance_after,
+        k_symbol,
+        bank,
+        account,
+        balance_before,
+        subsequent_trans_id_ as subsequent_trans_id,
+        row_number() over (partition by trans_id) as rn -- for deduplication
+    from subsequent_trans_ids
 )
-select 
-    trans_id,
-    account_id,
-    `date`,
-    `type`,
-    operation,
-    amount,
-    balance_after,
-    k_symbol,
-    bank,
-    account,
-    balance_before,
-    subsequent_trans_id_ as subsequent_trans_id
-from subsequent_trans_ids
+select * except (rn)
+from row_numbered 
+where rn = 1

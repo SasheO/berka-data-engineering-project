@@ -21,4 +21,4 @@ sources:
       - name: src_transactions
         description: Raw data table on transactions on different accounts
       - name: src_transactions_enriched
-        description: Data table on transactions on different accounts which has been enriched with balance before transaction and the id of the transaction that was carried afterwards on the same day or 0 if it was the last transaction
+        description: Data table on transactions on different accounts which has been enriched with balance before transaction and the id of the transaction that was carried afterwards on the same day

@@ -1,5 +1,4 @@
 -- this could be changed to incremental materialization that compares with account_id an accounting_date as the size of data grows and table materialization becomes too slow
--- TODO: change implementation of getting closing balance to formulaic one. Right now, there is no time on the accounting date, so the highest transaction ID is used to get closing balance. But this is not true for every single transaction
 -- TODO: add accounting date spine where daily account closing balance is the previous day's if there are no records on that day itself
 {{
   config(

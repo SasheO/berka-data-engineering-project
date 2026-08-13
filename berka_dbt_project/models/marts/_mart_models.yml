@@ -304,6 +304,10 @@ models:
         description: Account balance after the transaction was carried out
         data_tests:
           - not_null
+      - name: account_balance_before_transaction
+        description: Account balance before the transaction was carried out
+        data_tests:
+          - not_null
       - name: transaction_characterisation
         description: Characterisation of the transaction purpose
         data_tests:
@@ -339,3 +343,7 @@ models:
               arguments:
                 to: ref('dim_client')
                 field: client_id
+      - name: transaction_id_immediately_after_on_same_day
+        description: The next transaction carried out on the same account on the same day, or 0 if that was the last transaction for the day on that account
+        data_tests:
+          - not_null
