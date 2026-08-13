@@ -55,10 +55,10 @@ subsequent_trans_ids as (
         t1.bank,
         t1.account,
         t1.balance_before,
-        t2.trans_id as subsequent_trans_id
+        t2.trans_id as subsequent_trans_id_
     from balances_before_and_after t1
     left join balances_before_and_after t2
-    on t1.date = t2.date and t1.account_id = t2.account_id and t1.balance_after = t2.balance_before
+    on t1.date = t2.date and t1.account_id = t2.account_id and abs(t1.balance_after-t2.balance_before) < 0.1
 )
 select 
     trans_id,
@@ -72,5 +72,5 @@ select
     bank,
     account,
     balance_before,
-    subsequent_trans_id
+    subsequent_trans_id_ as subsequent_trans_id
 from subsequent_trans_ids

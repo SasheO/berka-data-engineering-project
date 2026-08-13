@@ -151,7 +151,7 @@ def create_bucket_if_not_exists():
 dag = DAG(
     dag_id="berka_elt",
     max_active_runs=1,
-    max_active_tasks=3,
+    max_active_tasks=5,
     description="A dag which extracts, loads and transforms data from Berka financial dataset with DBT and Clickhouse",
     schedule=timedelta(days=1),
     start_date=datetime(2026, 7, 15),
