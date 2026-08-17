@@ -1,11 +1,10 @@
 -- this could be changed to incremental materialization that compares with account_id an accounting_date as the size of data grows and table materialization becomes too slow
--- TODO: add accounting date spine where daily account closing balance is the previous day's if there are no records on that day itself
 {{
   config(
     materialized = 'incremental',
     unique_key = ['account_id', 'accounting_date'],
   )
-}} -- WOULD DO: add is_incremental block somewhere to onlly get data from the most recent accounting period till now, but the data is historical so can't do that
+}} 
 WITH 
 last_transaction_of_day AS (
   SELECT 
@@ -14,7 +13,8 @@ last_transaction_of_day AS (
     transaction_id,
     account_balance_after_transaction
   FROM {{ ref('fact_transaction') }}
-  where transaction_id_immediately_after_on_same_day = 0
+  where transaction_id_immediately_after_on_same_day = 0 
+  -- WOULD DO: add is_incremental block here to only get data within most recent accounting period
 ),
 aggregated_closing_balances AS (
   SELECT 
