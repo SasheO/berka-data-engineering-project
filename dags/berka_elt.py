@@ -167,7 +167,7 @@ def post_ingestion():
 dag = DAG(
     dag_id="berka_elt",
     max_active_runs=1,
-    max_active_tasks=5,
+    max_active_tasks=3,
     description="A dag which extracts, loads and transforms data from Berka financial dataset with DBT and Clickhouse",
     schedule=timedelta(days=1),
     start_date=datetime(2026, 7, 15),
@@ -175,8 +175,8 @@ dag = DAG(
     tags=["personal-project", "berka"],
     default_args={
         "depends_on_past": True, # so if a relationship data test fails for example (they are not fail-fast but run after all berka tasks), data quality issues don't compound. The DE gets a notification and can resolve the issue before future runs.
-        "retries": 2,
-        "retry_delay": timedelta(minutes=5),
+        "retries": 3,
+        "retry_delay": timedelta(minutes=3),
         'email': EMAIL_ON_FAILURE_LIST,
         'email_on_failure': True,
         'email_on_retry': False,

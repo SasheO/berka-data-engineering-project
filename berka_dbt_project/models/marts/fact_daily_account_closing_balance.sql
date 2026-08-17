@@ -7,26 +7,6 @@
   )
 }} -- WOULD DO: add is_incremental block somewhere to onlly get data from the most recent accounting period till now, but the data is historical so can't do that
 WITH 
-base_dates as (
-    {{ dbt.date_spine(
-        datepart="day",
-        start_date="cast('1995-01-01' as date)",
-        end_date="cast('1998-12-31' as date)"
-    ) }}
-),
-unique_account_ids as (
-    select distinct 
-        account_id
-    from {{ ref('dim_account') }}   -- Replace with your actual staging or dim model
-    where account_id is not null
-),
-account_date_grid as (
-    select
-        cast(d.date_day as date) as accounting_date,
-        a.account_id as account_id
-    from base_dates d
-    cross join unique_account_ids a
-),
 last_transaction_of_day AS (
   SELECT 
     account_id,
@@ -46,6 +26,26 @@ aggregated_closing_balances AS (
     round(SUM(CASE WHEN transaction_type = 'withdrawal' THEN -transaction_amount ELSE transaction_amount END), 2) as net_transaction_value
   FROM {{ ref('fact_transaction') }}
   GROUP BY account_id, accounting_date, district_id
+),
+base_dates as (
+    {{ dbt.date_spine(
+        datepart="day",
+        start_date="(select min(transaction_date) from " ~ ref('fact_transaction') ~ ")",
+        end_date="(select dateadd(day, 1, max(transaction_date)) from " ~ ref('fact_transaction') ~ ")"
+    ) }}
+),
+unique_account_ids as (
+    select distinct 
+        account_id
+    from {{ ref('dim_account') }}   -- Replace with your actual staging or dim model
+    where account_id is not null
+),
+account_date_grid as (
+    select
+        cast(d.date_day as date) as accounting_date,
+        a.account_id as account_id
+    from base_dates d
+    cross join unique_account_ids a
 ),
 final_ as 
 (

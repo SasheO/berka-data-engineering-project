@@ -106,7 +106,7 @@ SELECT
     round(sum(transaction_amount), 2) as total_monthly_transaction_volume
 FROM berka_analytics.fact_transaction
 GROUP BY "year", "month", account_id
-ORDER BY account_id, "year", "month"
+ORDER BY account_id, "year", "month";
 
 -- Sample query that answers "Which districts have the highest loan default rates?"
 WITH
@@ -135,7 +135,7 @@ SELECT
 FROM all_loans al 
 LEFT JOIN defaulted_loans dl
 ON al.district_id = dl.district_id
-ORDER BY fraction_of_defaulted_loans DESC
+ORDER BY fraction_of_defaulted_loans DESC;
 
 -- Sample query that answers "What is the balance trend over time for accounts that also have a credit card?"
 SELECT 
@@ -154,7 +154,7 @@ WHERE account_id in
         FROM berka_analytics.dim_credit_card
     )
 )
-ORDER BY account_id, accounting_date
+ORDER BY account_id, accounting_date;
 
 ```
 
