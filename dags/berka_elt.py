@@ -148,6 +148,22 @@ def create_bucket_if_not_exists():
     else:
         logger.info(f"Bucket {MINIO_BUCKET_NAME} already exists. Skipping creation.")
 
+@task_group()
+def post_ingestion():
+    SQLExecuteQueryOperator(
+    task_id="enrich_transactions_with_ordering",
+    conn_id=CLICKHOUSE_CONN_ID,
+    sql=f"ingestion/src_transactions_enriched.sql",
+    params={'db_schema': CLICKHOUSE_SCHEMA_NAME}
+    )
+
+    SQLExecuteQueryOperator(
+    task_id="add_invalid_pointer_ref_to_districts",
+    conn_id=CLICKHOUSE_CONN_ID,
+    sql=f"ingestion/src_demographic_district_invalid_pointer.sql",
+    params={'db_schema': CLICKHOUSE_SCHEMA_NAME}
+    )
+
 dag = DAG(
     dag_id="berka_elt",
     max_active_runs=1,
@@ -189,12 +205,6 @@ with dag:
     sql=list_all_files_within_path(SQL_SCRIPTS_PATH+"/"+SQL_DDL_SCRIPTS_PATH_PREFIX, SQL_DDL_SCRIPTS_PATH_PREFIX)
     )
 
-    enrich_transactions = SQLExecuteQueryOperator(
-    task_id="enrich_transactions_with_ordering",
-    conn_id=CLICKHOUSE_CONN_ID,
-    sql=f"ingestion/src_transactions_enriched.sql",
-    params={'db_schema': CLICKHOUSE_SCHEMA_NAME}
-    )
 
     dbt_models = DbtTaskGroup(
         group_id = "dbt_models",
@@ -218,6 +228,8 @@ with dag:
 
     ingest_clickhouse = ingest_staged_data_into_source_tables()
 
+    post_ingestion_tasks =  post_ingestion()
+
     create_schema_tables >> create_source_tables >> create_minio_bucket >> \
-    extract_and_stage >> ingest_clickhouse >> enrich_transactions >> \
+    extract_and_stage >> ingest_clickhouse >> post_ingestion_tasks >> \
     dbt_models >> generate_dbt_docs_to_minio_bucket
