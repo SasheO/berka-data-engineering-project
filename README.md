@@ -170,7 +170,9 @@ Here is a link to the dimensional model with description on each table and many 
 DBT Docs in the Airflow webserver also shows this same information but on a physical implementation rather than logical level.
 
 ### Reasons for Various Design Choices
-Although the data source is historical and small in size, I designed the dimensional model with the assumption that the data would grow.
+Although the data source is historical and small in size, I designed the dimensional model with the assumption that the data would grow and considering plausible business requirements of a modern bank today.
+
+For example, the history of a client's district is stored in an SCD type 4 table `dim_client_district_historical` because customers can move frequently and change addresses, meaning that history tracking within the same table (e.g. SCD type 2) could lead to a needlessly bloated dimension table.
 
 Some guiding questions I started this design process with were:
 > What is the total transaction volume per account per month?
@@ -183,10 +185,12 @@ Some guiding questions I started this design process with were:
 
 Many models are denormalised. For example, `dim_client` does not only include a `district_id` foreign key column that joins to the `dim_demographic_district` dimension table, but it also includes duplicated `district_name` field. This is because I wanted most common potential questions a business user would ask (like the ones above) to be answerable in three JOINS or less as the database used is ClickHouse, a JOIN-slow OLAP database.
 
+Lastly, the permenant order relation in the source data is absent from the dimensional model as it lacks a time series or dating. Thus, this data would be not very useful for analytics.
+
 ## Tests and Validation
 Appropriate unique, not null, accepted values, and relationships tests are implemented in every model. Full documentations can be viewed in DBT docs in the Airflow webserver (click `browse` > `DBT Docs`).
 
-Failure of various any of these tests would lead to the pipeline being blocked after the Airflow task fails, preventing data quality issues from propagating to downstream models.
+Failure of various any of these tests would lead to the pipeline being blocked when the Airflow task fails, preventing data quality issues from propagating to downstream models.
 
 To test run this, I ran a query that inserts duplicate rows in the source table for bank accounts:
 ![Query to insert duplicate rows in src_accounts table](images/query_inserting_errors_in_clickhouse_web_server.png)
