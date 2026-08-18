@@ -44,32 +44,27 @@ echo -e "AIRFLOW_UID=$(id -u)"
 
 ### Directory structure
 ```
-|   .dockerignore
-|   .env_example
-|   compose.yaml
-|   Dockerfile
-|   README.md
-|   requirements.txt
-|   
-+---berka_dbt_project
+├── .dockerignore
+├── .env_example
+├── compose.yaml
+├── Dockerfile
+├── README.md
+├── requirements.txt
+├── berka_dbt_project/
 |   |   dbt_project.yml
-|   |   
-|   +---models              # contains staging, fact and dimension models and their corresponding .yml file for documentation, sources and tests, except snapshots
-|   |   +---marts                                             
-|   |   +---staging
-|   +---snapshots           # contains snapshot models and their corresponding .yml file for documentation and tests
-+---dags
+|   └── models/             # contains staging, fact and dimension models and their corresponding .yml file for documentation, sources and tests, except snapshots
+|   |   ├── marts/
+|   |   ├── staging/
+|   └── snapshots/          # contains snapshot models and their corresponding .yml file for documentation and tests
+├── dags/
 |   |   berka_elt.py
 |   |         
-+---images                  # contains images of pipeline architecture, dimensional model, README images, and screenshots of DAG while running
-|   |   
-|   +---screenshots of DAG
-|           
-+---include
-|   +---sql                 # contains ClickHouse sql scripts used for initial creation of and ingestion into source tables
-|               
-+---plugins
-    |   helpers.py          # contains helper functions used in DAG
+├── images/                 # contains images of pipeline architecture, dimensional model, README images, and screenshots of DAG while running
+├── └── screenshots of DAG       
+├── include/
+├── └── sql/                # contains ClickHouse sql scripts used for initial creation of and ingestion into source tables 
+├── plugins/
+|   └── helpers.py          # contains helper functions used in DAG
             
 ```
 
