@@ -42,6 +42,36 @@ echo -e "AIRFLOW_UID=$(id -u)"
 ```
 * If you’re using macOS or Windows, leave the value in your `.env` file as is: `AIRFLOW_UID=50000`
 
+### Directory structure
+```
+|   .dockerignore
+|   .env_example
+|   compose.yaml
+|   Dockerfile
+|   README.md
+|   requirements.txt
+|   
++---berka_dbt_project
+|   |   dbt_project.yml
+|   |   
+|   +---models              # contains staging, fact and dimension models and their corresponding .yml file for documentation, sources and tests, except snapshots
+|   |   +---marts                                             
+|   |   +---staging
+|   +---snapshots           # contains snapshot models and their corresponding .yml file for documentation and tests
++---dags
+|   |   berka_elt.py
+|   |         
++---images                  # contains images of pipeline architecture, dimensional model, README images, and screenshots of DAG while running
+|   |   
+|   +---screenshots of DAG
+|           
++---include
+|   +---sql                 # contains ClickHouse sql scripts used for initial creation of and ingestion into source tables
+|               
++---plugins
+    |   helpers.py          # contains helper functions used in DAG
+            
+```
 
 ### Set Up Connections and Variables in Airflow
 In your terminal, navigate to the folder where this repository is stored and run `docker compose up`.
