@@ -2,6 +2,7 @@
   config(
     materialized = 'incremental',
     unique_key = 'transaction_id',
+    partition_by = 'toStartOfMonth(transaction_date)'
   )
 }}
 with transactions as (
