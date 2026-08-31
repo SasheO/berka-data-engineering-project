@@ -128,7 +128,7 @@ def ingest_staged_data_into_source_tables():
                     "minio_bucket_name": MINIO_BUCKET_NAME,
                     }
         )
-        deduplicate = SQLExecuteQueryOperator(
+        deduplicate = SQLExecuteQueryOperator( # need deduplication because if a single task fails and restarts, replacing merge tree will not have done the background deduplications yet and unique tests will fail
             task_id=f"optimize_{table_name}",
             conn_id=CLICKHOUSE_CONN_ID,
             sql="ingestion/optimise_table_deduplicate_clickhouse.sql",

@@ -186,7 +186,7 @@ ORDER BY account_id, accounting_date;
 The DAG will also generate DBT docs with descriptions of tables, columns, relationships, dependencies, data tests, and more which are viewable within the Airflow webserver if you click `browse` > `DBT Docs`.
 
 ## Dimensional Model
-Here is a link to the dimensional model with description on each table and many fields: [Dimensonal Model](https://dbdiagram.io/d/berka-dataset-v2-6a4e96184ac62e474c5dd29c). 
+Here is a link to the dimensional model with description on each table and many fields: [Dimensonal Model](https://dbdiagram.io/e/6a4e96184ac62e474c5dd29c/6a955ef4aed2f4f6be701390). 
 
 
 ![Dimensional model diagram](images/erd.png)
